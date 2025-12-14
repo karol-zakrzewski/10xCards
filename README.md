@@ -1,94 +1,149 @@
-# 10x Astro Starter
+# 10xCards
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+> A web app for creating flashcards faster: generate cards with AI from pasted text, curate them, save to Supabase, and review with the SM-2 spaced-repetition algorithm.
 
-## Tech Stack
+![status](https://img.shields.io/badge/status-MVP%20in%20progress-yellow)
+![node](https://img.shields.io/badge/node-22.14.0-339933?logo=node.js&logoColor=white)
 
-- [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
-- [React](https://react.dev/) v19.0.0 - UI library for building interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+## Table of contents
 
-## Prerequisites
+- [Project description](#project-description)
+- [Tech stack](#tech-stack)
+- [Getting started locally](#getting-started-locally)
+- [Available scripts](#available-scripts)
+- [Project scope](#project-scope)
+- [Project status](#project-status)
+- [License](#license)
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+## Project description
 
-## Getting Started
+10xCards is a minimalist flashcard app (**UI in Polish**) built as an MVP. It focuses on the shortest path from “I have a text” to “I have good cards I can review”:
 
-1. Clone the repository:
+- Paste a short text (up to **1000 characters**) and generate a small set of Q/A flashcards with AI
+- Edit each card, accept/reject it, and **bulk-save only accepted cards**
+- Create cards manually in the same editor
+- Store cards in **Supabase (PostgreSQL)** and review them with **SM-2** spaced repetition
+
+Product requirements and key decisions live in:
+
+- `.ai/prd.md`
+- `.ai/tech-stack.md`
+
+## Tech stack
+
+Frontend
+
+- Astro (`astro`) + React (`react`, `react-dom`)
+- TypeScript
+- Tailwind CSS (`tailwindcss`) + `tailwind-merge`
+- shadcn/ui-style components (Radix UI, class-variance-authority, lucide-react)
+
+Backend (planned for MVP)
+
+- Supabase (PostgreSQL, Auth, Row Level Security)
+
+AI (planned for MVP)
+
+- OpenRouter (model gateway)
+
+Tooling
+
+- ESLint (`eslint`) + Prettier (`prettier`)
+- Husky + lint-staged for pre-commit checks
+
+CI/CD & hosting (planned)
+
+- GitHub Actions
+- DigitalOcean (Docker-based deployment)
+
+## Getting started locally
+
+Prerequisites
+
+- Node.js **22.14.0** (see `.nvmrc`)
+- npm
+
+Setup
 
 ```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
-```
+# 1) use the expected Node.js version
+nvm use
 
-2. Install dependencies:
-
-```bash
+# 2) install dependencies
 npm install
+
+# 3) configure environment variables
+cp .env.example .env
+# fill in: SUPABASE_URL, SUPABASE_KEY, OPENROUTER_API_KEY
 ```
 
-3. Run the development server:
+Run the app
 
 ```bash
 npm run dev
 ```
 
-4. Build for production:
+Build & preview
 
 ```bash
 npm run build
+npm run preview
 ```
 
-## Available Scripts
+## Available scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues
+- `npm run dev` – start Astro dev server
+- `npm run build` – build for production
+- `npm run preview` – preview the production build
+- `npm run lint` – run ESLint
+- `npm run lint:fix` – run ESLint with `--fix`
+- `npm run format` – format with Prettier
+- `npm run astro` – run the Astro CLI
 
-## Project Structure
+## Project scope
 
-```md
-.
-├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
-```
+MVP includes
 
-## AI Development Support
+- AI flashcard generation from pasted text (**1000 character** hard limit; no auto-truncation)
+- Manual card creation (front/back)
+- Review & curation flow: edit, accept/reject, delete
+- Bulk save of accepted cards; edits after acceptance require re-acceptance
+- Supabase persistence (cards with `user_id`, `front`, `back`, `due_at`, `sm2_state`) with RLS enabled
+- SM-2 scheduling (store `due_at` in **UTC**)
+- Event logging for `generated`, `accepted`, `rejected` (for MVP metrics)
+- Authentication: sign up, sign in, password reset, delete account
+- End-to-end tests (Playwright) for the main “happy paths”
 
-This project is configured with AI development tools to enhance the development experience, providing guidelines for:
+Out of scope (MVP)
 
-- Project structure
-- Coding practices
-- Frontend development
-- Styling with Tailwind
-- Accessibility best practices
-- Astro and React guidelines
+- Custom advanced spaced-repetition algorithms (beyond SM-2)
+- Importing files (PDF/DOCX/etc.)
+- Sharing decks between users
+- Integrations with external learning platforms
+- Mobile apps
+- Content filtering, tagging, sources/metadata
+- Payments, SSO, autosave
 
-### Cursor IDE
+Success metrics (from PRD)
 
-The project includes AI rules in `.cursor/rules/` directory that help Cursor IDE understand the project structure and provide better code suggestions.
+- ≥75% of AI-generated cards are accepted
+- ≥75% of all created cards originate from AI
+- Playwright tests cover the main flows
+- Event logs are complete for the vast majority of operations
 
-### GitHub Copilot
+## Project status
 
-AI instructions for GitHub Copilot are available in `.github/copilot-instructions.md`
+This repository currently contains the Astro/React/Tailwind scaffold; MVP features described in `.ai/prd.md` are **in progress**.
 
-### Windsurf
-
-The `.windsurfrules` file contains AI configuration for Windsurf.
-
-## Contributing
-
-Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
+- [x] MVP defined (`.ai/prd.md`)
+- [x] Tech stack selected (`.ai/tech-stack.md`)
+- [ ] Supabase schema + RLS
+- [ ] Auth screens and session handling
+- [ ] AI generation flow (OpenRouter) + card curation
+- [ ] SM-2 review flow
+- [ ] Playwright end-to-end tests
+- [ ] CI/CD + deployment
 
 ## License
 
-MIT
+No license file is currently included in the repository. If you plan to open-source this project, add a `LICENSE` file (for example: MIT).
