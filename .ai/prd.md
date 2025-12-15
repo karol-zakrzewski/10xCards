@@ -2,7 +2,7 @@
 
 ## 1. Przegląd produktu
 
-Aplikacja web do szybkiego tworzenia fiszek edukacyjnych. Umożliwia generowanie kart przez AI z krótkiego tekstu (do 1000 znaków utworzenie kilka-kilkanaście fiszek) oraz ręczne tworzenie. Użytkownik musi być zalogowany (Supabase auth). Karty są przechowywane w Supabase, powtórki realizowane biblioteką SM-2. Interface w języku polskim. Minimalistyczny UX z wykorzystaniem biblioteki shadcn, brak person docelowych.
+Aplikacja web do szybkiego tworzenia fiszek edukacyjnych. Umożliwia generowanie kart przez AI z krótkiego tekstu (do 1000 znaków utworzenie kilka-kilkanaście fiszek) oraz ręczne tworzenie. Użytkownik musi być zalogowany (Supabase auth). Fiszki są przechowywane w Supabase (PostgreSQL), powtórki realizowane biblioteką SM-2. Interface w języku polskim. Minimalistyczny UX z wykorzystaniem biblioteki shadcn, brak person docelowych.
 
 ## 2. Problem użytkownika
 
@@ -11,100 +11,104 @@ Ręczne tworzenie wysokiej jakości fiszek jest czasochłonne, co zniechęca do 
 ## 3. Wymagania funkcjonalne
 
 1. Generowanie fiszek AI z wklejonego tekstu (limit 1000 znaków na jeden zestaw fiszek - kilka/kilkanaście; walidacja front, brak automatycznego przycinania).
-2. Ręczne tworzenie fiszek w tym samym edytorze co AI (front/back).
-3. Podgląd, edycja, odrzucanie i akceptacja pojedynczych fiszek po generacji.
-4. Zapis bulkiem tylko zaakceptowanych fiszek; edytowana zaakceptowana karta wymaga ponownej akceptacji.
-5. Usuwanie pojedynczych fiszek przed zapisem oraz po zapisaniu.
-6. Przechowywanie fiszek w Supabase (cards: user_id, front, back, due_at, sm2_state; RLS włączone).
-7. Integracja powtórek SM-2: wyliczanie due_at przy batch save, przechowywanie w UTC.
-8. Logowanie eventów w Supabase: generated, accepted, rejected (pola: user_id, card_id, status, ts).
-9. Auth: rejestracja, logowanie, kasowanie konta; dostęp tylko po zalogowaniu.
+2. Ręczne tworzenie fiszek w tym samym edytorze co AI (front/back); po zapisaniu karta pojawia się na liście "Moje fiszki".
+3. Podgląd, edycja, odrzucanie i akceptacja pojedynczych fiszek po generacji (stan „przed zapisem” jest utrzymywany tylko po stronie klienta).
+4. Zapisanie zaakceptowanych fiszek następuje po kliknięciu przycisku zapisu; zapisujemy tylko te, które mają status accepted.
+5. Usuwanie pojedynczych fiszek przed zapisem oraz po zapisaniu; po zapisaniu usuwanie jest trwałe (bez soft delete) i wymaga potwierdzenia użytkownika.
+6. Przechowywanie fiszek w Supabase (flashcards: user_id, front, back, due_at, sm2_state; RLS włączone).
+7. Integracja powtórek SM-2: wyliczanie due_at przy zapisie fiszki; przechowywanie w UTC.
+8. Statystyki generowania fiszek: zbieranie informacji o tym, ile fiszek zostało wygenerowanych przez AI i ile z nich ostatecznie zaakceptowano.
+9. Auth: rejestracja, logowanie, kasowanie konta; dostęp tylko po zalogowaniu (użytkownicy zarządzani przez Supabase Auth, bez własnej tabeli users).
 10. UI polski; brak content filterów i tagów w MVP.
-11. Testy Playwright pokrywające happy path: signup, generate→edit→accept→batch save, reject flow, review SM-2.
-12. Brak wymagań SLA czasu generacji; UI pokazuje stan w trakcie generacji.
+11. Brak wymagań SLA czasu generacji; UI pokazuje stan w trakcie generacji i komunikat o błędzie w razie niepowodzenia API.
+
+### Format „sm2_state”
+
+- `sm2_state` przechowuje JSON serializowany do stringa o stabilnym schemacie i wersji `v=1`.
+- Minimalny zestaw pól wymaganych w MVP: `v`, `repetitions`, `interval_days`, `ease_factor` (pozostałe pola mogą zostać dodane później bez łamania schematu).
 
 ## 4. Granice produktu
 
-- Poza zakresem: własny algorytm powtórek; import formatów plików; współdzielenie zestawów; integracje z innymi platformami; aplikacje mobilne; content filtering; dodatkowe atrybuty kart (tagi, źródła); płatności; SSO; autosave.
+- Poza zakresem: własny algorytm powtórek; import formatów plików; współdzielenie zestawów; integracje z innymi platformami; aplikacje mobilne; content filtering; dodatkowe atrybuty kart (tagi, źródło materiału); płatności; SSO; autosave.
 - Techniczne: web only; OpenRouter jako warstwa modelu AI z możliwością zmiany modelu; priorytet prostoty.
 
 ## 5. Historyjki użytkowników
 
-US-001
+ID: US-001
+Tytuł: Rejestracja konta
+Opis: Jako nowy użytkownik chcę się zarejestrować, aby mieć dostęp do własnych fiszek i móc korzystać z generowania fiszek przez AI.
+Kryteria akceptacji:
+- Formularz rejestracyjny zawiera pola na adres e-mail i hasło.
+- Po poprawnym wypełnieniu formularza i weryfikacji danych konto jest aktywowane.
+- Użytkownik otrzymuje potwierdzenie pomyślnej rejestracji i zostaje zalogowany.
 
-- Tytuł: Rejestracja użytkownika
-- Opis: Jako nowy użytkownik chcę założyć konto, aby móc korzystać z aplikacji.
-- Kryteria akceptacji: formularz email/hasło, walidacja, email verification w Supabase, komunikat o sukcesie lub błędzie.
+ID: US-002
+Tytuł: Logowanie do aplikacji
+Opis: Jako zarejestrowany użytkownik chcę móc się zalogować, aby mieć dostęp do moich fiszek i historii generowania.
+Kryteria akceptacji:
+- Po podaniu prawidłowych danych logowania użytkownik zostaje przekierowany do widoku generowania fiszek.
+- Błędne dane logowania wyświetlają komunikat o nieprawidłowych danych.
+- Dane dotyczące logowania przechowywane są w bezpieczny sposób.
 
-US-002
+ID: US-003
+Tytuł: Generowanie fiszek przy użyciu AI
+Opis: Jako zalogowany użytkownik chcę wkleić kawałek tekstu i za pomocą przycisku wygenerować propozycje fiszek, aby zaoszczędzić czas na ręcznym tworzeniu pytań i odpowiedzi.
+Kryteria akceptacji:
+- W widoku generowania fiszek znajduje się pole tekstowe, w którym użytkownik może wkleić swój tekst.
+- Pole tekstowe oczekuje od 1000 do 10 000 znaków.
+- Po kliknięciu przycisku generowania aplikacja komunikuje się z API modelu LLM i wyświetla listę wygenerowanych propozycji fiszek do akceptacji przez użytkownika.
+- W przypadku problemów z API lub braku odpowiedzi modelu użytkownik zobaczy stosowny komunikat o błędzie.
 
-- Tytuł: Logowanie użytkownika
-- Opis: Jako użytkownik chcę się zalogować, aby uzyskać dostęp do fiszek.
-- Kryteria akceptacji: poprawne dane dają dostęp, błędne dane pokazują błąd, sesja utrzymywana, przycisk resetu hasła.
+ID: US-004
+Tytuł: Przegląd i zatwierdzanie propozycji fiszek
+Opis: Jako zalogowany użytkownik chcę móc przeglądać wygenerowane fiszki i decydować, które z nich chcę dodać do mojego zestawu, aby zachować tylko przydatne pytania i odpowiedzi.
+Kryteria akceptacji:
+- Lista wygenerowanych fiszek jest wyświetlana pod formularzem generowania.
+- Przy każdej fiszce znajduje się przycisk pozwalający na jej zatwierdzenie, edycję lub odrzucenie.
+- Po zatwierdzeniu wybranych fiszek użytkownik może kliknąć przycisk zapisu i dodać je do bazy danych.
 
-US-004
+ID: US-005
+Tytuł: Edycja fiszek utworzonych ręcznie i generowanych przez AI
+Opis: Jako zalogowany użytkownik chcę edytować stworzone lub wygenerowane fiszki, aby poprawić ewentualne błędy lub dostosować pytania i odpowiedzi do własnych potrzeb.
+Kryteria akceptacji:
+- Istnieje lista zapisanych fiszek (zarówno ręcznie tworzonych, jak i zatwierdzonych wygenerowanych).
+- Każdą fiszkę można kliknąć i wejść w tryb edycji.
+- Zmiany są zapisywane w bazie danych po zatwierdzeniu.
 
-- Tytuł: Generowanie fiszek AI
-- Opis: Jako użytkownik chcę wkleić tekst i otrzymać zestaw fiszek front/back.
-- Kryteria akceptacji: blokada wysyłki przy >1000 znaków; po sukcesie lista kart z front/back; komunikat o błędzie przy niepowodzeniu; zapis eventu generated z modelem.
+ID: US-006
+Tytuł: Usuwanie fiszek
+Opis: Jako zalogowany użytkownik chcę usuwać zbędne fiszki, aby zachować porządek w moim zestawie.
+Kryteria akceptacji:
+- Przy każdej fiszce na liście (w widoku "Moje fiszki") widoczna jest opcja usunięcia.
+- Po wybraniu usuwania użytkownik musi potwierdzić operację, zanim fiszka zostanie trwale usunięta.
+- Fiszki zostają trwale usunięte z bazy danych po potwierdzeniu.
 
-US-005
+ID: US-007
+Tytuł: Ręczne tworzenie fiszek
+Opis: Jako zalogowany użytkownik chcę ręcznie stworzyć fiszkę (określając przód i tył fiszki), aby dodawać własny materiał, który nie pochodzi z automatycznie generowanych treści.
+Kryteria akceptacji:
+- W widoku "Moje fiszki" znajduje się przycisk dodania nowej fiszki.
+- Naciśnięcie przycisku otwiera formularz z polami "Przód" i "Tył".
+- Po zapisaniu nowa fiszka pojawia się na liście.
 
-- Tytuł: Edycja i akceptacja pojedynczej fiszki
-- Opis: Jako użytkownik chcę edytować treść karty i zaakceptować ją do zapisania.
-- Kryteria akceptacji: edycja front/back; klik accept oznacza kartę jako accepted; edycja po akceptacji ustawia status needs re-accept; event accepted zapisany.
+ID: US-008
+Tytuł: Sesja nauki z algorytmem powtórek
+Opis: Jako zalogowany użytkownik chcę, aby dodane fiszki były dostępne w widoku "Sesja nauki" opartym na zewnętrznym algorytmie, aby móc efektywnie się uczyć (spaced repetition).
+Kryteria akceptacji:
+- W widoku "Sesja nauki" algorytm przygotowuje dla mnie sesję nauki fiszek
+- Na start wyświetlany jest przód fiszki, poprzez interakcję użytkownik wyświetla jej tył
+- Użytkownik ocenia zgodnie z oczekiwaniami algorytmu na ile przyswoił fiszkę
+- Następnie algorytm pokazuje kolejną fiszkę w ramach sesji nauki
 
-US-006
-
-- Tytuł: Odrzucenie fiszki
-- Opis: Jako użytkownik chcę odrzucić kartę, która jest nieprzydatna.
-- Kryteria akceptacji: klik reject usuwa kartę z kolejki zapisu; event rejected zapisany; opcja cofnięcia ostatniego odrzucenia do momentu opuszczenia sesji.
-
-US-007
-
-- Tytuł: Batch save zaakceptowanych fiszek
-- Opis: Jako użytkownik chcę jednym kliknięciem zapisać wszystkie zaakceptowane karty do bazy.
-- Kryteria akceptacji: przycisk Save accepted zapisuje tylko accepted; operacja atomowa w transakcji; w razie błędu lista card_id z przyczyną; post-save liczba zapisanych potwierdzona.
-
-US-008
-
-- Tytuł: Ręczne tworzenie fiszki
-- Opis: Jako użytkownik chcę samodzielnie dodać kartę w prostym formularzu z dwoma polami.
-- Kryteria akceptacji: formularz front/back, zapis natychmiast; karta pojawia się w liście.
-
-US-009
-
-- Tytuł: Przegląd i nauka według SM-2
-- Opis: Jako użytkownik chcę przeglądać zaplanowane karty i odpowiadać zgodnie z harmonogramem SM-2.
-- Kryteria akceptacji: widok kart due today; po odpowiedzi aktualizacja sm2_state i due_at w UTC; zapis w Supabase.
-
-US-010
-
-- Tytuł: Usuwanie fiszki
-- Opis: Jako użytkownik chcę usunąć wybraną kartę z bazy.
-- Kryteria akceptacji: przycisk delete dostępny po zapisaniu; potwierdzenie; karta znika z listy i z harmonogramu.
-
-US-011
-
-- Tytuł: Logowanie metryk
-- Opis: Jako właściciel produktu chcę rejestrować eventy, aby mierzyć akceptację i koszty.
-- Kryteria akceptacji: każdy generated/accepted/rejected zapisuje user_id, card_id, status, ts;
-
-US-012
-
-- Tytuł: Usunięcie konta
-- Opis: Jako użytkownik chcę usunąć konto wraz z danymi.
-- Kryteria akceptacji: akcja delete account dostępna po zalogowaniu; cascade delete kart i eventów; potwierdzenie operacji.
-
-US-013
-
-- Tytuł: Obsługa błędów AI i limitów
-- Opis: Jako użytkownik chcę jasnych komunikatów, gdy generacja się nie powiedzie lub osiągnę limity.
-- Kryteria akceptacji: timeout komunikatu; błąd pokazuje opcję ponów; brak utraty już wygenerowanych kart w sesji.
+ID: US-009
+Tytuł: Bezpieczny dostęp i autoryzacja
+Opis: Jako zalogowany użytkownik chcę mieć pewność, że moje fiszki nie są dostępne dla innych użytkowników, aby zachować prywatność i bezpieczeństwo danych.
+Kryteria akceptacji:
+- Tylko zalogowany użytkownik może wyświetlać, edytować i usuwać swoje fiszki.
+- Nie ma dostępu do fiszek innych użytkowników ani możliwości współdzielenia.
 
 ## 6. Metryki sukcesu
 
-1. 75% fiszek wygenerowanych przez AI jest akceptowane przez użytkownika (accepted/generated z eventów).
-2. 75% wszystkich tworzonych fiszek pochodzi z AI (liczone z eventów generated vs ręcznie utworzone).
-3. Co najmniej jeden komplet testów Playwright przechodzi dla kluczowych ścieżek (signup, generate/edit/accept/save, reject, review SM-2, limit 1000 znaków).
-4. Dane metryk dostępne z Supabase bez dodatkowych ETL (event logs kompletne dla 95% operacji).
+1. 75% wygenerowanych przez AI fiszek jest akceptowanych przez użytkownika.
+2. Użytkownicy tworzą co najmniej 75% fiszek z wykorzystaniem AI (w stosunku do wszystkich nowo dodanych fiszek).
+3. Monitorowanie liczby wygenerowanych fiszek i porównanie z liczbą zatwierdzonych do analizy jakości i użyteczności.
