@@ -22,3 +22,7 @@ CI/CD i Hosting:
 
 - Github Actions do tworzenia pipeline’ów CI/CD
 - DigitalOcean do hostowania aplikacji za pośrednictwem obrazu docker
+
+Powtórki (spaced repetition):
+
+- Mechanizm powtórek (np. SM-2) jest planowany na późniejszy etap (po core MVP); na tym etapie nie implementujemy jeszcze logiki planowania sesji ani pól typu `due_at` / `sm2_state` w bazie.

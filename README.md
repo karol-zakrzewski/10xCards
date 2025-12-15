@@ -1,6 +1,6 @@
 # 10xCards
 
-> A web app for creating flashcards faster: generate cards with AI from pasted text, curate them, save to Supabase, and review with the SM-2 spaced-repetition algorithm.
+> A web app for creating flashcards faster: generate cards with AI from pasted text, curate them, and save to Supabase (review / spaced repetition planned post-MVP).
 
 ![status](https://img.shields.io/badge/status-MVP%20in%20progress-yellow)
 ![node](https://img.shields.io/badge/node-22.14.0-339933?logo=node.js&logoColor=white)
@@ -22,7 +22,7 @@
 - Paste a short text (up to **1000 characters**) and generate a small set of Q/A flashcards with AI
 - Edit each card, accept/reject it, and **bulk-save only accepted cards**
 - Create cards manually in the same editor
-- Store cards in **Supabase (PostgreSQL)** and review them with **SM-2** spaced repetition
+- Store cards in **Supabase (PostgreSQL)** (review / spaced repetition planned post-MVP)
 
 Product requirements and key decisions live in:
 
@@ -108,14 +108,14 @@ MVP includes
 - Manual card creation (front/back)
 - Review & curation flow: edit, accept/reject, delete
 - Bulk save of accepted cards; edits after acceptance require re-acceptance
-- Supabase persistence (cards with `user_id`, `front`, `back`, `due_at`, `sm2_state`) with RLS enabled
-- SM-2 scheduling (store `due_at` in **UTC**)
+- Supabase persistence (cards with `user_id`, `front`, `back`, `source`, `generation_id`) with RLS enabled
 - Event logging for `generated`, `accepted`, `rejected` (for MVP metrics)
 - Authentication: sign up, sign in, password reset, delete account
 - End-to-end tests (Playwright) for the main “happy paths”
 
 Out of scope (MVP)
 
+- Review flow and scheduling (spaced repetition; e.g. SM-2) — planned post-MVP
 - Custom advanced spaced-repetition algorithms (beyond SM-2)
 - Importing files (PDF/DOCX/etc.)
 - Sharing decks between users
@@ -140,7 +140,7 @@ This repository currently contains the Astro/React/Tailwind scaffold; MVP featur
 - [ ] Supabase schema + RLS
 - [ ] Auth screens and session handling
 - [ ] AI generation flow (OpenRouter) + card curation
-- [ ] SM-2 review flow
+- [ ] Review flow (spaced repetition) — post-MVP
 - [ ] Playwright end-to-end tests
 - [ ] CI/CD + deployment
 

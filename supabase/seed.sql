@@ -1,0 +1,3 @@
+-- optional seed data for local development.
+-- keep this file intentionally minimal for now; it exists so `supabase db reset` succeeds
+-- with `db.seed.enabled = true` in `supabase/config.toml`.

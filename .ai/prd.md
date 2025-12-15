@@ -2,11 +2,11 @@
 
 ## 1. Przegląd produktu
 
-Aplikacja web do szybkiego tworzenia fiszek edukacyjnych. Umożliwia generowanie kart przez AI z krótkiego tekstu (do 1000 znaków utworzenie kilka-kilkanaście fiszek) oraz ręczne tworzenie. Użytkownik musi być zalogowany (Supabase auth). Fiszki są przechowywane w Supabase (PostgreSQL), powtórki realizowane biblioteką SM-2. Interface w języku polskim. Minimalistyczny UX z wykorzystaniem biblioteki shadcn, brak person docelowych.
+Aplikacja web do szybkiego tworzenia fiszek edukacyjnych. Umożliwia generowanie kart przez AI z krótkiego tekstu (do 1000 znaków utworzenie kilka-kilkanaście fiszek) oraz ręczne tworzenie. Użytkownik musi być zalogowany (Supabase auth). Fiszki są przechowywane w Supabase (PostgreSQL). Mechanizm powtórek (spaced repetition / SM-2) jest planowany na późniejszy etap (po zrealizowaniu core MVP). Interface w języku polskim. Minimalistyczny UX z wykorzystaniem biblioteki shadcn, brak person docelowych.
 
 ## 2. Problem użytkownika
 
-Ręczne tworzenie wysokiej jakości fiszek jest czasochłonne, co zniechęca do stosowania spaced repetition. Potrzebne jest narzędzie, które szybko generuje fiszki z dostarczonego tekstu, pozwala je edytować, zaakceptować lub odrzucić i uczyć się według sprawdzonego algorytmu powtórek.
+Ręczne tworzenie wysokiej jakości fiszek jest czasochłonne, co zniechęca do stosowania spaced repetition. Potrzebne jest narzędzie, które szybko generuje fiszki z dostarczonego tekstu, pozwala je edytować, zaakceptować lub odrzucić. Nauka według algorytmu powtórek (np. SM-2) zostanie dodana w kolejnym etapie prac.
 
 ## 3. Wymagania funkcjonalne
 
@@ -15,21 +15,20 @@ Ręczne tworzenie wysokiej jakości fiszek jest czasochłonne, co zniechęca do 
 3. Podgląd, edycja, odrzucanie i akceptacja pojedynczych fiszek po generacji (stan „przed zapisem” jest utrzymywany tylko po stronie klienta).
 4. Zapisanie zaakceptowanych fiszek następuje po kliknięciu przycisku zapisu; zapisujemy tylko te, które mają status accepted.
 5. Usuwanie pojedynczych fiszek przed zapisem oraz po zapisaniu; po zapisaniu usuwanie jest trwałe (bez soft delete) i wymaga potwierdzenia użytkownika.
-6. Przechowywanie fiszek w Supabase (flashcards: user_id, front, back, due_at, sm2_state; RLS włączone).
-7. Integracja powtórek SM-2: wyliczanie due_at przy zapisie fiszki; przechowywanie w UTC.
-8. Statystyki generowania fiszek: zbieranie informacji o tym, ile fiszek zostało wygenerowanych przez AI i ile z nich ostatecznie zaakceptowano.
-9. Auth: rejestracja, logowanie, kasowanie konta; dostęp tylko po zalogowaniu (użytkownicy zarządzani przez Supabase Auth, bez własnej tabeli users).
-10. UI polski; brak content filterów i tagów w MVP.
-11. Brak wymagań SLA czasu generacji; UI pokazuje stan w trakcie generacji i komunikat o błędzie w razie niepowodzenia API.
+6. Przechowywanie fiszek w Supabase (flashcards: user_id, front, back, source, generation_id, created_at, updated_at; RLS włączone).
+7. Statystyki generowania fiszek: zbieranie informacji o tym, ile fiszek zostało wygenerowanych przez AI i ile z nich ostatecznie zaakceptowano.
+8. Auth: rejestracja, logowanie, kasowanie konta; dostęp tylko po zalogowaniu (użytkownicy zarządzani przez Supabase Auth, bez własnej tabeli users).
+9. UI polski; brak content filterów i tagów w MVP.
+10. Brak wymagań SLA czasu generacji; UI pokazuje stan w trakcie generacji i komunikat o błędzie w razie niepowodzenia API.
 
-### Format „sm2_state”
+### Powtórki (po MVP)
 
-- `sm2_state` przechowuje JSON serializowany do stringa o stabilnym schemacie i wersji `v=1`.
-- Minimalny zestaw pól wymaganych w MVP: `v`, `repetitions`, `interval_days`, `ease_factor` (pozostałe pola mogą zostać dodane później bez łamania schematu).
+- Mechanizm powtórek (spaced repetition; np. SM-2) zostanie zaimplementowany w późniejszym etapie.
+- Wraz z powtórkami planujemy dodać pola takie jak `due_at` (UTC) oraz `sm2_state` (wersjonowany JSON w stringu).
 
 ## 4. Granice produktu
 
-- Poza zakresem: własny algorytm powtórek; import formatów plików; współdzielenie zestawów; integracje z innymi platformami; aplikacje mobilne; content filtering; dodatkowe atrybuty kart (tagi, źródło materiału); płatności; SSO; autosave.
+- Poza zakresem (MVP): mechanizm powtórek (spaced repetition / SM-2); własny algorytm powtórek; import formatów plików; współdzielenie zestawów; integracje z innymi platformami; aplikacje mobilne; content filtering; dodatkowe atrybuty kart (tagi, źródło materiału); płatności; SSO; autosave.
 - Techniczne: web only; OpenRouter jako warstwa modelu AI z możliwością zmiany modelu; priorytet prostoty.
 
 ## 5. Historyjki użytkowników
@@ -92,8 +91,8 @@ Kryteria akceptacji:
 - Po zapisaniu nowa fiszka pojawia się na liście.
 
 ID: US-008
-Tytuł: Sesja nauki z algorytmem powtórek
-Opis: Jako zalogowany użytkownik chcę, aby dodane fiszki były dostępne w widoku "Sesja nauki" opartym na zewnętrznym algorytmie, aby móc efektywnie się uczyć (spaced repetition).
+Tytuł: Sesja nauki z algorytmem powtórek (po MVP)
+Opis: Jako zalogowany użytkownik chcę, aby dodane fiszki były dostępne w widoku "Sesja nauki" opartym na zewnętrznym algorytmie, aby móc efektywnie się uczyć (spaced repetition). Ten element jest planowany na późniejszy etap prac.
 Kryteria akceptacji:
 - W widoku "Sesja nauki" algorytm przygotowuje dla mnie sesję nauki fiszek
 - Na start wyświetlany jest przód fiszki, poprzez interakcję użytkownik wyświetla jej tył

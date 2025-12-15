@@ -13,17 +13,10 @@ Przechowuje **zapisane** fiszki (zaakceptowane z AI lub utworzone ręcznie). Har
 | `front` | `varchar(200)` | NOT NULL, CHECK `length(trim(front)) > 0` | Przód fiszki |
 | `back` | `varchar(500)` | NOT NULL, CHECK `length(trim(back)) > 0` | Tył fiszki |
 | `source` | `varchar(20)` | NOT NULL, CHECK `source IN ('ai-full','ai-edited','manual')` | Pochodzenie fiszki |
-| `due_at` | `timestamptz` | NOT NULL | Data najbliższej powtórki (UTC) |
-| `sm2_state` | `varchar(1000)` | NOT NULL | JSON jako string (`v=1`, min: `v,repetitions,interval_days,ease_factor`) |
 | `generation_id` | `bigint` | NULL, FK → `public.generations(id)` ON DELETE SET NULL | Powiązana generacja AI (opcjonalnie) |
 | `created_at` | `timestamptz` | NOT NULL, `DEFAULT now()` | Utworzono |
 | `updated_at` | `timestamptz` | NOT NULL, `DEFAULT now()` | Zmieniono (trigger) |
 
-**Dodatkowe constrainty (zalecane):**
-
-- `CHECK (jsonb_typeof(sm2_state::jsonb) = 'object')`
-- `CHECK ((sm2_state::jsonb->>'v') = '1')`
-- `CHECK ((sm2_state::jsonb ? 'repetitions') AND (sm2_state::jsonb ? 'interval_days') AND (sm2_state::jsonb ? 'ease_factor'))`
 
 ---
 
@@ -71,9 +64,6 @@ Loguje nieudane próby generacji.
 
 ## 3. Indeksy
 
-**Dla powtórek (SM-2):**
-
-- `(user_id, due_at)` dla pobierania fiszek „do powtórki” po użytkowniku i terminie
 
 **Dla list i edycji:**
 
@@ -89,9 +79,6 @@ Przykładowe DDL (do migracji):
 
 ```sql
 -- flashcards
-create index if not exists flashcards_user_due_idx
-  on public.flashcards (user_id, due_at);
-
 create index if not exists flashcards_user_created_idx
   on public.flashcards (user_id, created_at desc);
 
@@ -167,7 +154,7 @@ create policy "generation_error_logs_insert_own"
 ## 5. Dodatkowe uwagi i decyzje projektowe
 
 - `source` jest `varchar + CHECK` (zamiast ENUM) dla prostszych migracji: `ai-full`, `ai-edited`, `manual`.
-- `sm2_state` pozostaje jako JSON-string (`varchar`) z CHECK zapewniającym `v=1` i minimalne pola SM-2.
+- Mechanizm powtórek (SM-2) jest poza zakresem core MVP; pola `due_at` i `sm2_state` zostaną dodane w kolejnej iteracji.
 - Metryki i audyt generacji trzymane agregacyjnie w `generations` (jak w schemacie porównawczym); brak tabeli zdarzeń.
 - `generation_id` w `flashcards` zachowuje relację do źródłowej generacji (jak w schemacie porównawczym).
 - Hard delete: brak `deleted_at`; usuwanie fizyczne.
