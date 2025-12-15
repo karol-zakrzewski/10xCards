@@ -16,6 +16,9 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.production
+.env.keys
+.env.local
+.env.*.local
 
 # macOS-specific files
 .DS_Store
@@ -23,6 +26,10 @@ pnpm-debug.log*
 # setting folders
 .idea/
 .vscode
+
+# Supabase
+.branches
+.temp
 
 # other
 lessons
