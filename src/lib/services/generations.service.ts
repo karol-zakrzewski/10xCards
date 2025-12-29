@@ -44,7 +44,19 @@ interface ListGenerationsParams {
   order: "asc" | "desc";
 }
 
-const mapGenerationRowToDTO = (row: Tables<"generations">): GenerationListItemDTO => ({
+type GenerationListRow = Pick<
+  Tables<"generations">,
+  | "id"
+  | "model"
+  | "generated_count"
+  | "accepted_unedited_count"
+  | "accepted_edited_count"
+  | "source_text_length"
+  | "generation_duration"
+  | "created_at"
+>;
+
+const mapGenerationRowToDTO = (row: GenerationListRow): GenerationListItemDTO => ({
   id: row.id,
   model: row.model,
   generatedCount: row.generated_count,
@@ -138,7 +150,7 @@ export const listGenerations = async ({
     throw new GenerationServiceError(500, "DB_ERROR", "Failed to list generations.", { hint: error.message });
   }
 
-  const rows = data ?? [];
+  const rows = (data ?? []) as GenerationListRow[];
   const mapped = rows.map(mapGenerationRowToDTO);
 
   return {
@@ -151,7 +163,7 @@ export const listGenerations = async ({
   };
 };
 
-const normalizeError = (error: unknown): Record<string, unknown> => {
+const normalizeError = (error: unknown): { message: string; name?: string } => {
   if (error instanceof Error) {
     return { message: error.message, name: error.name };
   }
@@ -189,7 +201,7 @@ const logGenerationError = async (
     error: unknown;
   }
 ) => {
-  const errorMessage = normalizeError(error).message;
+  const { message: errorMessage } = normalizeError(error);
   await supabase.from("generation_error_logs").insert({
     user_id: userId,
     model,
