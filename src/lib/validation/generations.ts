@@ -18,3 +18,13 @@ export const generationListQuerySchema = z.object({
 });
 
 export type GenerationListQuery = z.infer<typeof generationListQuerySchema>;
+
+export const generationIdParamSchema = z.object({
+  id: z.coerce
+    .number({ required_error: "id is required", invalid_type_error: "id must be a number" })
+    .int("id must be an integer")
+    .positive("id must be greater than 0")
+    .refine(Number.isSafeInteger, "id is too large"),
+});
+
+export type GenerationIdParam = z.infer<typeof generationIdParamSchema>;

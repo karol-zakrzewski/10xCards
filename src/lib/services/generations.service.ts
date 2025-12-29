@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@/db/supabase.client";
 import type {
   FlashcardProposalDTO,
   GenerationCreateCommand,
+  GenerationDetailDTO,
   GenerationListItemDTO,
   GenerationSummaryDTO,
   PagedResponse,
@@ -44,6 +45,12 @@ interface ListGenerationsParams {
   order: "asc" | "desc";
 }
 
+interface GetGenerationByIdParams {
+  supabase: SupabaseClient;
+  userId: string;
+  id: number;
+}
+
 type GenerationListRow = Pick<
   Tables<"generations">,
   | "id"
@@ -56,6 +63,18 @@ type GenerationListRow = Pick<
   | "created_at"
 >;
 
+type GenerationDetailRow = Pick<
+  Tables<"generations">,
+  | "id"
+  | "generated_count"
+  | "accepted_unedited_count"
+  | "accepted_edited_count"
+  | "source_text_length"
+  | "generation_duration"
+  | "created_at"
+  | "updated_at"
+>;
+
 const mapGenerationRowToDTO = (row: GenerationListRow): GenerationListItemDTO => ({
   id: row.id,
   model: row.model,
@@ -65,6 +84,17 @@ const mapGenerationRowToDTO = (row: GenerationListRow): GenerationListItemDTO =>
   sourceTextLength: row.source_text_length,
   generationDurationMs: row.generation_duration,
   createdAt: row.created_at,
+});
+
+const mapGenerationDetailRowToDTO = (row: GenerationDetailRow): GenerationDetailDTO => ({
+  id: row.id,
+  generatedCount: row.generated_count,
+  acceptedUneditedCount: row.accepted_unedited_count,
+  acceptedEditedCount: row.accepted_edited_count,
+  sourceTextLength: row.source_text_length,
+  generationDurationMs: row.generation_duration,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
 });
 
 export const generateFromText = async (
@@ -161,6 +191,35 @@ export const listGenerations = async ({
       total: count ?? 0,
     },
   };
+};
+
+export const getGenerationById = async ({
+  supabase,
+  userId,
+  id,
+}: GetGenerationByIdParams): Promise<GenerationDetailDTO> => {
+  const { data, error } = await supabase
+    .from("generations")
+    .select(
+      "id, generated_count, accepted_unedited_count, accepted_edited_count, source_text_length, generation_duration, created_at, updated_at"
+    )
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      // PostgREST code for no rows found
+      throw new GenerationServiceError(404, "NOT_FOUND", "Generation not found.");
+    }
+    throw new GenerationServiceError(500, "DB_ERROR", "Failed to fetch generation.", { hint: error.message });
+  }
+
+  if (!data) {
+    throw new GenerationServiceError(404, "NOT_FOUND", "Generation not found.");
+  }
+
+  return mapGenerationDetailRowToDTO(data);
 };
 
 const normalizeError = (error: unknown): { message: string; name?: string } => {
