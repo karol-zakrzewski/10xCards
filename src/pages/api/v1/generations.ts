@@ -1,9 +1,10 @@
 import type { APIRoute } from "astro";
 
-import type { ErrorResponse, GenerationCreateCommand } from "@/types";
+import type { GenerationCreateCommand, GenerationListItemDTO, PagedResponse } from "@/types";
 import { DEFAULT_USER_ID } from "@/db/supabase.client";
-import { generateFromText, GenerationServiceError } from "@/lib/services/generations.service";
-import { generationCreateSchema } from "@/lib/validation/generations";
+import { jsonError } from "@/lib/api/responses";
+import { generateFromText, GenerationServiceError, listGenerations } from "@/lib/services/generations.service";
+import { generationCreateSchema, generationListQuerySchema } from "@/lib/validation/generations";
 
 export const prerender = false;
 
@@ -40,10 +41,38 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 };
 
-function jsonError(status: number, code: string, message: string, details?: Record<string, unknown>) {
-  const payload: ErrorResponse = { error: { code, message, ...(details ? { details } : {}) } };
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+export const GET: APIRoute = async ({ request, locals }) => {
+  const supabase = locals.supabase;
+
+  let query: ReturnType<typeof generationListQuerySchema.parse>;
+  try {
+    const searchParams = Object.fromEntries(new URL(request.url).searchParams.entries());
+    query = generationListQuerySchema.parse(searchParams);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid query parameters";
+    return jsonError(400, "VALIDATION_ERROR", message);
+  }
+
+  try {
+    const result: PagedResponse<GenerationListItemDTO> = await listGenerations({
+      supabase,
+      userId: DEFAULT_USER_ID,
+      page: query.page,
+      limit: query.limit,
+      order: query.order,
+    });
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    if (error instanceof GenerationServiceError) {
+      return jsonError(error.status, error.code, error.message, error.details);
+    }
+
+    return jsonError(500, "INTERNAL_ERROR", "Unexpected server error.", {
+      cause: error instanceof Error ? error.message : "Unknown",
+    });
+  }
+};

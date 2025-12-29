@@ -75,6 +75,11 @@
   - `limit` (1–100, domyślnie 20)
   - `sort` = `created_at` (domyślnie)
   - `order` = `desc|asc` (domyślnie `desc`)
+- Przykładowe zapytanie:
+  ```bash
+  curl -H "Authorization: Bearer <token>" \\
+    "http://localhost:3000/api/v1/generations?page=1&limit=10&order=desc"
+  ```
 - Response JSON:
   ```json
   {

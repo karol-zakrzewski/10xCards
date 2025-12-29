@@ -1,8 +1,15 @@
 import { createHash, randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
 
+import type { Tables } from "@/db/database.types";
 import type { SupabaseClient } from "@/db/supabase.client";
-import type { FlashcardProposalDTO, GenerationCreateCommand, GenerationSummaryDTO } from "@/types";
+import type {
+  FlashcardProposalDTO,
+  GenerationCreateCommand,
+  GenerationListItemDTO,
+  GenerationSummaryDTO,
+  PagedResponse,
+} from "@/types";
 
 const DEFAULT_MODEL = "openrouter/mock-gpt";
 
@@ -28,6 +35,25 @@ export interface GenerationResult {
   generation: GenerationSummaryDTO;
   proposals: FlashcardProposalDTO[];
 }
+
+interface ListGenerationsParams {
+  supabase: SupabaseClient;
+  userId: string;
+  page: number;
+  limit: number;
+  order: "asc" | "desc";
+}
+
+const mapGenerationRowToDTO = (row: Tables<"generations">): GenerationListItemDTO => ({
+  id: row.id,
+  model: row.model,
+  generatedCount: row.generated_count,
+  acceptedUneditedCount: row.accepted_unedited_count,
+  acceptedEditedCount: row.accepted_edited_count,
+  sourceTextLength: row.source_text_length,
+  generationDurationMs: row.generation_duration,
+  createdAt: row.created_at,
+});
 
 export const generateFromText = async (
   command: GenerationCreateCommand,
@@ -86,6 +112,42 @@ export const generateFromText = async (
       createdAt: generationRow.created_at,
     },
     proposals,
+  };
+};
+
+export const listGenerations = async ({
+  supabase,
+  userId,
+  page,
+  limit,
+  order,
+}: ListGenerationsParams): Promise<PagedResponse<GenerationListItemDTO>> => {
+  const offset = (page - 1) * limit;
+
+  const { data, error, count } = await supabase
+    .from("generations")
+    .select(
+      "id, model, generated_count, accepted_unedited_count, accepted_edited_count, source_text_length, generation_duration, created_at",
+      { count: "exact" }
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: order === "asc" })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    throw new GenerationServiceError(500, "DB_ERROR", "Failed to list generations.", { hint: error.message });
+  }
+
+  const rows = data ?? [];
+  const mapped = rows.map(mapGenerationRowToDTO);
+
+  return {
+    data: mapped,
+    page: {
+      page,
+      limit,
+      total: count ?? 0,
+    },
   };
 };
 
