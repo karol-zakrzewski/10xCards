@@ -14,3 +14,40 @@ export const flashcardCreateSchema = z.object({
 });
 
 export type FlashcardCreateInput = z.infer<typeof flashcardCreateSchema>;
+
+export const flashcardListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  q: z.string().trim().min(1).max(200).optional(),
+  source: z.enum(["ai-full", "ai-edited", "manual"]).optional(),
+  generationId: z.coerce
+    .number({ invalid_type_error: "generationId must be a number" })
+    .int("generationId must be an integer")
+    .positive("generationId must be greater than 0")
+    .refine(Number.isSafeInteger, "generationId is too large")
+    .optional(),
+  sort: z.enum(["created_at", "updated_at"]).default("created_at"),
+  order: z.enum(["asc", "desc"]).default("desc"),
+});
+
+export type FlashcardListQuery = z.infer<typeof flashcardListQuerySchema>;
+
+export const bulkFlashcardsCreateSchema = z.object({
+  generationId: z.coerce
+    .number({ required_error: "generationId is required", invalid_type_error: "generationId must be a number" })
+    .int("generationId must be an integer")
+    .positive("generationId must be greater than 0")
+    .refine(Number.isSafeInteger, "generationId is too large"),
+  items: z
+    .array(
+      z.object({
+        front: flashcardCreateSchema.shape.front,
+        back: flashcardCreateSchema.shape.back,
+        source: z.enum(["ai-full", "ai-edited"]),
+      })
+    )
+    .min(1, "items must contain at least one flashcard")
+    .max(100, "items must not exceed 100 flashcards"),
+});
+
+export type BulkFlashcardsCreateInput = z.infer<typeof bulkFlashcardsCreateSchema>;

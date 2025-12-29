@@ -2,9 +2,9 @@ import type { APIRoute } from "astro";
 
 import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { jsonError } from "@/lib/api/responses";
-import { createFlashcard, FlashcardServiceError } from "@/lib/services/flashcards.service";
-import { flashcardCreateSchema } from "@/lib/validation/flashcards";
-import type { FlashcardCreateCommand } from "@/types";
+import { createFlashcard, FlashcardServiceError, listFlashcards } from "@/lib/services/flashcards.service";
+import { flashcardCreateSchema, flashcardListQuerySchema } from "@/lib/validation/flashcards";
+import type { FlashcardCreateCommand, FlashcardDTO, PagedResponse } from "@/types";
 
 export const prerender = false;
 
@@ -37,6 +37,53 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return new Response(JSON.stringify({ data: flashcard }), {
       status: 201,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    if (error instanceof FlashcardServiceError) {
+      return jsonError(error.status, error.code, error.message, error.details);
+    }
+
+    return jsonError(500, "INTERNAL_ERROR", "Unexpected server error.", {
+      cause: error instanceof Error ? error.message : "Unknown",
+    });
+  }
+};
+
+export const GET: APIRoute = async ({ request, locals }) => {
+  const supabase = locals.supabase;
+
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader || authHeader.trim() === "") {
+    return jsonError(401, "UNAUTHORIZED", "Missing Authorization header.");
+  }
+
+  let query: ReturnType<typeof flashcardListQuerySchema.parse>;
+  try {
+    const searchParams = Object.fromEntries(new URL(request.url).searchParams.entries());
+    query = flashcardListQuerySchema.parse(searchParams);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid query parameters";
+    return jsonError(400, "VALIDATION_ERROR", message);
+  }
+
+  const userId = DEFAULT_USER_ID; // TODO: replace with authenticated user id when auth is added
+
+  try {
+    const result: PagedResponse<FlashcardDTO> = await listFlashcards({
+      supabase,
+      userId,
+      page: query.page,
+      limit: query.limit,
+      order: query.order,
+      sort: query.sort,
+      source: query.source,
+      generationId: query.generationId,
+      q: query.q,
+    });
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
