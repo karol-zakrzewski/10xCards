@@ -94,62 +94,9 @@ create index if not exists generation_error_logs_user_created_idx
   on public.generation_error_logs (user_id, created_at desc);
 ```
 
-## 4. Zasady PostgreSQL (RLS)
+## 4. Zasady dostępu (RLS)
 
-Założenie: wszystkie tabele w `public` z włączonym RLS; dostęp tylko do danych użytkownika (`auth.uid()`).
-
-```sql
--- FLASHCARDS: owner CRUD
-alter table public.flashcards enable row level security;
-
-create policy "flashcards_select_own"
-  on public.flashcards for select
-  using (user_id = auth.uid());
-
-create policy "flashcards_insert_own"
-  on public.flashcards for insert
-  with check (user_id = auth.uid());
-
-create policy "flashcards_update_own"
-  on public.flashcards for update
-  using (user_id = auth.uid())
-  with check (user_id = auth.uid());
-
-create policy "flashcards_delete_own"
-  on public.flashcards for delete
-  using (user_id = auth.uid());
-
--- GENERATIONS: owner CRUD (agregaty metryk)
-alter table public.generations enable row level security;
-
-create policy "generations_select_own"
-  on public.generations for select
-  using (user_id = auth.uid());
-
-create policy "generations_insert_own"
-  on public.generations for insert
-  with check (user_id = auth.uid());
-
-create policy "generations_update_own"
-  on public.generations for update
-  using (user_id = auth.uid())
-  with check (user_id = auth.uid());
-
-create policy "generations_delete_own"
-  on public.generations for delete
-  using (user_id = auth.uid());
-
--- GENERATION_ERROR_LOGS: owner select/insert
-alter table public.generation_error_logs enable row level security;
-
-create policy "generation_error_logs_select_own"
-  on public.generation_error_logs for select
-  using (user_id = auth.uid());
-
-create policy "generation_error_logs_insert_own"
-  on public.generation_error_logs for insert
-  with check (user_id = auth.uid());
-```
+Decyzja: **RLS nie będzie włączane na żadnej z tabel**. Dostęp aplikacji będzie kontrolowany wyłącznie na warstwie backendu (service role / serwerowe API), więc w migracjach pomijamy `alter table ... enable row level security` oraz polityki.
 
 ## 5. Dodatkowe uwagi i decyzje projektowe
 
