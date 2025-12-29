@@ -21,7 +21,6 @@
 - Nagłówki:
   - `Content-Type: application/json`
   - `Authorization: Bearer <supabase_access_token>` (zalecane)
-  - Opcjonalnie: `Idempotency-Key: <uuid>` dla operacji POST, które mogą być retried (szczególnie generacja).
 - Paginacja list (klasyczna):
   - Parametry zapytania: `page` (>= 1) oraz `limit` (1–100)
   - Odpowiedź zawsze zawiera metadane: `{ page, limit, total }` (gdzie `total` to liczba wszystkich rekordów dla danego filtra)
@@ -225,7 +224,6 @@
   - `400 Bad Request` – walidacja/`items` puste/duplikaty/`generationId` brak
   - `401 Unauthorized`
   - `404 Not Found` – `generationId` nie istnieje lub nie należy do użytkownika (RLS)
-  - `409 Conflict` – opcjonalnie: konflikt idempotencji (gdy użyto `Idempotency-Key`)
 
 #### GET `/flashcards/{id}`
 
