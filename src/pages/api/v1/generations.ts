@@ -1,15 +1,14 @@
 import type { APIRoute } from "astro";
 
 import type { ErrorResponse, GenerationCreateCommand } from "@/types";
-import { DEFAULT_USER_ID, supabaseClient } from "@/db/supabase.client";
+import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { generateFromText, GenerationServiceError } from "@/lib/services/generations.service";
 import { generationCreateSchema } from "@/lib/validation/generations";
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request }) => {
-  const supabase = supabaseClient;
-
+export const POST: APIRoute = async ({ request, locals }) => {
+  const supabase = locals.supabase;
   let body: GenerationCreateCommand;
   try {
     const json = await request.json();
