@@ -6,6 +6,8 @@ import type {
   FlashcardCreateCommand,
   FlashcardDTO,
   FlashcardSource,
+  FlashcardUpdateCommand,
+  DeletedResponse,
 } from "@/types";
 
 export class FlashcardServiceError extends Error {
@@ -42,6 +44,12 @@ interface ListFlashcardsParams {
   source?: FlashcardSource;
   generationId?: number;
   q?: string;
+}
+
+interface FlashcardByIdParams {
+  supabase: SupabaseClient;
+  userId: string;
+  id: string;
 }
 
 export const createFlashcard = async (
@@ -118,6 +126,71 @@ export const listFlashcards = async ({
       total: count ?? 0,
     },
   };
+};
+
+export const getFlashcardById = async ({ supabase, userId, id }: FlashcardByIdParams): Promise<FlashcardDTO> => {
+  const { data, error } = await supabase
+    .from("flashcards")
+    .select("id, front, back, source, generation_id, created_at, updated_at")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      throw new FlashcardServiceError(404, "NOT_FOUND", "Flashcard not found.");
+    }
+    throw new FlashcardServiceError(500, "DB_ERROR", "Failed to fetch flashcard.", { hint: error.message });
+  }
+
+  if (!data) {
+    throw new FlashcardServiceError(404, "NOT_FOUND", "Flashcard not found.");
+  }
+
+  return mapFlashcardRowToDTO(data as FlashcardRow);
+};
+
+export const updateFlashcard = async (
+  { supabase, userId }: { supabase: SupabaseClient; userId: string },
+  id: string,
+  command: FlashcardUpdateCommand
+): Promise<FlashcardDTO> => {
+  const { data, error } = await supabase
+    .from("flashcards")
+    .update({
+      front: command.front,
+      back: command.back,
+    })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select("id, front, back, source, generation_id, created_at, updated_at")
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      throw new FlashcardServiceError(404, "NOT_FOUND", "Flashcard not found.");
+    }
+    throw new FlashcardServiceError(500, "DB_ERROR", "Failed to update flashcard.", { hint: error.message });
+  }
+
+  if (!data) {
+    throw new FlashcardServiceError(404, "NOT_FOUND", "Flashcard not found.");
+  }
+
+  return mapFlashcardRowToDTO(data as FlashcardRow);
+};
+
+export const deleteFlashcard = async (
+  { supabase, userId }: { supabase: SupabaseClient; userId: string },
+  id: string
+): Promise<DeletedResponse> => {
+  const { error } = await supabase.from("flashcards").delete().eq("id", id).eq("user_id", userId);
+
+  if (error) {
+    throw new FlashcardServiceError(500, "DB_ERROR", "Failed to delete flashcard.", { hint: error.message });
+  }
+
+  return { deleted: true };
 };
 
 export const bulkCreateFlashcards = async (

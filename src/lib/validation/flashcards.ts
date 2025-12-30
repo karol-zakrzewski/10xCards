@@ -15,6 +15,15 @@ export const flashcardCreateSchema = z.object({
 
 export type FlashcardCreateInput = z.infer<typeof flashcardCreateSchema>;
 
+export const flashcardUpdateSchema = z.object({
+  front: flashcardCreateSchema.shape.front,
+  back: flashcardCreateSchema.shape.back,
+});
+
+export const flashcardIdParamSchema = z.object({
+  id: z.string({ required_error: "id is required" }).uuid("id must be a valid UUID"),
+});
+
 export const flashcardListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
