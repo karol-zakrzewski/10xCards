@@ -1,19 +1,21 @@
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { AccountUserVM } from "@/lib/viewmodels/accountViewmodels";
+import type { AccountUserVM, ApiErrorVM } from "@/lib/viewmodels/accountViewmodels";
 
 interface AccountProfileCardProps {
   user: AccountUserVM;
   isLoading: boolean;
+  error?: ApiErrorVM;
 }
 
-export const AccountProfileCard = ({ user, isLoading }: AccountProfileCardProps) => {
+export const AccountProfileCard = ({ user, isLoading, error }: AccountProfileCardProps) => {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Dane konta</CardTitle>
         <CardDescription>Podstawowe informacje o Twoim profilu.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">{user.emailLabel}</p>
           {isLoading ? (
@@ -22,6 +24,11 @@ export const AccountProfileCard = ({ user, isLoading }: AccountProfileCardProps)
             <p className="text-sm font-medium text-foreground">{user.email}</p>
           )}
         </div>
+        {error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+        ) : null}
       </CardContent>
     </Card>
   );
