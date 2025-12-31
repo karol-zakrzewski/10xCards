@@ -1,0 +1,11 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import AppShellLayout from "@/layouts/AppShellLayout.astro";
+import AccountView from "@/components/account/AccountView";
+---
+
+<Layout title="Panel użytkownika">
+  <AppShellLayout>
+    <AccountView client:load />
+  </AppShellLayout>
+</Layout>
