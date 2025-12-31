@@ -50,6 +50,10 @@ const buildQuery = (filters: FlashcardsFiltersVM) => {
   return params.toString();
 };
 
+const goTo = (href: string) => {
+  window.location.href = href;
+};
+
 export const useFlashcardsList = (filters: FlashcardsFiltersVM) => {
   const [items, setItems] = React.useState<FlashcardDTO[]>([]);
   const [pageMeta, setPageMeta] = React.useState<PageMeta>({
@@ -96,7 +100,7 @@ export const useFlashcardsList = (filters: FlashcardsFiltersVM) => {
       setStatus("error");
 
       if (mapped.httpStatus === 401 || mapped.code === "UNAUTHORIZED") {
-        window.location.href = "/login";
+        goTo("/login");
       }
     }
   }, [filters]);

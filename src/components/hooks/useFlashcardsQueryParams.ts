@@ -68,7 +68,7 @@ const buildSearch = (filters: FlashcardsFiltersVM) => {
   return params.toString();
 };
 
-const normalizeFilters = (filters: FlashcardsFiltersVM) => {
+const normalizeFilters = (filters: FlashcardsFiltersVM): FlashcardsFiltersVM => {
   const source = filters.source && VALID_SOURCES.has(filters.source) ? filters.source : undefined;
   const page = Math.max(1, Number.isNaN(filters.page) ? 1 : Math.floor(filters.page));
   const limit = clamp(Number.isNaN(filters.limit) ? DEFAULT_LIMIT : Math.floor(filters.limit), 1, 100);

@@ -34,6 +34,10 @@ interface FlashcardMutationsOptions {
   onSuccess?: () => void;
 }
 
+const goTo = (href: string) => {
+  window.location.href = href;
+};
+
 export const useFlashcardMutations = (options: FlashcardMutationsOptions = {}) => {
   const { onSuccess } = options;
 
@@ -78,7 +82,7 @@ export const useFlashcardMutations = (options: FlashcardMutationsOptions = {}) =
         setCreateState("error");
 
         if (mapped.httpStatus === 401 || mapped.code === "UNAUTHORIZED") {
-          window.location.href = "/login";
+          goTo("/login");
         }
 
         return null;
@@ -120,7 +124,7 @@ export const useFlashcardMutations = (options: FlashcardMutationsOptions = {}) =
         setUpdateState("error");
 
         if (mapped.httpStatus === 401 || mapped.code === "UNAUTHORIZED") {
-          window.location.href = "/login";
+          goTo("/login");
         }
 
         return null;
@@ -155,7 +159,7 @@ export const useFlashcardMutations = (options: FlashcardMutationsOptions = {}) =
         setDeleteState("error");
 
         if (mapped.httpStatus === 401 || mapped.code === "UNAUTHORIZED") {
-          window.location.href = "/login";
+          goTo("/login");
         }
 
         return false;

@@ -30,7 +30,7 @@ export const EditProposalDialog = ({ open, proposal, onClose, onSave, isBusy = f
 
   React.useEffect(() => {
     setDraft(createEditDraft(proposal));
-  }, [proposal?.id, open]);
+  }, [proposal, open]);
 
   const validatedDraft = React.useMemo(() => validateEditDraft(draft.front, draft.back), [draft.front, draft.back]);
 
