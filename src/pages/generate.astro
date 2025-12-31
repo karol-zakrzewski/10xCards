@@ -1,0 +1,11 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import AppShellLayout from "@/layouts/AppShellLayout.astro";
+import GenerateFlashcardsView from "@/components/generate/GenerateFlashcardsView";
+---
+
+<Layout title="Generowanie fiszek">
+  <AppShellLayout>
+    <GenerateFlashcardsView client:load />
+  </AppShellLayout>
+</Layout>

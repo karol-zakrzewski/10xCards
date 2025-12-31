@@ -1,0 +1,53 @@
+---
+const { currentPath = Astro.url.pathname } = Astro.props;
+
+const navItems = [
+  { label: "Generowanie", href: "/generate" },
+  { label: "Moje fiszki", href: "/flashcards" },
+  { label: "Panel użytkownika", href: "/account" },
+];
+---
+
+<div class="min-h-screen bg-background text-foreground">
+  <header class="border-b border-border bg-card">
+    <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-6 py-4">
+      <div class="flex items-center gap-2 text-lg font-semibold">
+        <span
+          aria-hidden="true"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground"
+        >
+          10x
+        </span>
+        <span>10xCards</span>
+      </div>
+      <nav aria-label="Główna" class="flex flex-wrap items-center gap-2 text-sm">
+        {
+          navItems.map((item) => {
+            const isActive = currentPath === item.href;
+            return (
+              <a
+                href={item.href}
+                class:list={[
+                  "rounded-md px-3 py-2 font-medium transition",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                ]}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {item.label}
+              </a>
+            );
+          })
+        }
+        <span aria-disabled="true" class="rounded-md px-3 py-2 text-xs font-medium text-muted-foreground opacity-70">
+          Sesja powtórek — Wkrótce
+        </span>
+      </nav>
+    </div>
+  </header>
+  <main class="mx-auto w-full max-w-6xl px-6 py-8">
+    <slot />
+  </main>
+  <div id="toaster" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+</div>
