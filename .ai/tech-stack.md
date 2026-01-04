@@ -13,10 +13,10 @@ Backend - Supabase jako kompleksowe rozwiązanie backendowe:
 - Jest rozwiązaniem open source, które można hostować lokalnie lub na własnym serwerze
 - Posiada wbudowaną autentykację użytkowników
 
-AI - Komunikacja z modelami przez usługę Openrouter.ai:
+AI - Generowanie przez Google Gemini (Google GenAI):
 
-- Dostęp do szerokiej gamy modeli (OpenAI, Anthropic, Google i wiele innych), które pozwolą nam znaleźć rozwiązanie zapewniające wysoką efektywność i niskie koszta
-- Pozwala na ustawianie limitów finansowych na klucze API
+- Jeden provider: modele Gemini (aktualnie `gemini-2.5-flash`)
+- Bez warstwy pośredniej; bezpośrednie wywołania Google AI
 
 CI/CD i Hosting:
 

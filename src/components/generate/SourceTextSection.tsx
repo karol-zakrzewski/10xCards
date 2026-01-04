@@ -10,6 +10,7 @@ interface SourceTextSectionProps {
   validation: SourceTextValidationVM;
   canGenerate: boolean;
   isGenerating: boolean;
+  isSaving: boolean;
   onGenerate: () => void;
   onClear: () => void;
   disableGenerateReason?: string;
@@ -22,6 +23,7 @@ export const SourceTextSection = ({
   validation,
   canGenerate,
   isGenerating,
+  isSaving,
   onGenerate,
   onClear,
   disableGenerateReason,
@@ -39,9 +41,11 @@ export const SourceTextSection = ({
   return (
     <section className="grid gap-4 rounded-xl border border-border bg-card p-6 shadow-sm">
       <div className="grid gap-2">
-        <label htmlFor={textareaId} className="text-sm font-medium">
-          Tekst źródłowy
-        </label>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <label htmlFor={textareaId} className="text-sm font-medium">
+            Tekst źródłowy
+          </label>
+        </div>
         <Textarea
           id={textareaId}
           value={value}
@@ -73,7 +77,7 @@ export const SourceTextSection = ({
         <Button onClick={onGenerate} disabled={!canGenerate || isGenerating}>
           {isGenerating ? "Generowanie…" : "Generuj"}
         </Button>
-        <Button variant="outline" onClick={onClear} disabled={isBusy}>
+        <Button variant="outline" onClick={onClear} disabled={isSaving}>
           Wyczyść
         </Button>
       </div>

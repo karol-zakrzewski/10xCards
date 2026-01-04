@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { performance } from "node:perf_hooks";
 
 import type { Tables } from "@/db/database.types";
@@ -11,8 +11,15 @@ import type {
   GenerationSummaryDTO,
   PagedResponse,
 } from "@/types";
+import { GoogleAIService, GoogleAIServiceError } from "@/lib/services/google-ai.service";
 
-const DEFAULT_MODEL = "openrouter/mock-gpt";
+const DEFAULT_GOOGLE_MODEL = "gemini-2.5-flash";
+
+const googleAiService = new GoogleAIService({
+  apiKey: import.meta.env.GEMINI_API_KEY,
+  defaultModel: DEFAULT_GOOGLE_MODEL,
+  defaultParams: { temperature: 0.2, top_p: 1, max_tokens: 900 },
+});
 
 export class GenerationServiceError extends Error {
   constructor(
@@ -99,7 +106,7 @@ const mapGenerationDetailRowToDTO = (row: GenerationDetailRow): GenerationDetail
 
 export const generateFromText = async (
   command: GenerationCreateCommand,
-  { supabase, userId, model = DEFAULT_MODEL }: GenerateFromTextOptions
+  { supabase, userId, model = DEFAULT_GOOGLE_MODEL }: GenerateFromTextOptions
 ): Promise<GenerationResult> => {
   const sourceText = command.sourceText.trim();
   const sourceTextLength = sourceText.length;
@@ -107,17 +114,25 @@ export const generateFromText = async (
 
   const startedAt = performance.now();
 
+  const usedModel = model;
+
   let proposals: FlashcardProposalDTO[];
   try {
-    proposals = await mockGenerateProposals();
+    proposals = await googleAiService.generateFlashcardProposalsFromText({ sourceText, model: usedModel });
   } catch (error) {
     await logGenerationError(supabase, {
       userId,
-      model,
+      model: usedModel,
       sourceTextHash,
       sourceTextLength,
       error,
     });
+
+    if (error instanceof GoogleAIServiceError) {
+      throw new GenerationServiceError(error.status, error.code, error.message, {
+        cause: normalizeError(error),
+      });
+    }
 
     throw new GenerationServiceError(502, "PROVIDER_ERROR", "The AI provider failed to generate flashcards.", {
       cause: normalizeError(error),
@@ -131,7 +146,7 @@ export const generateFromText = async (
     .from("generations")
     .insert({
       user_id: userId,
-      model,
+      model: usedModel,
       generated_count: generatedCount,
       generation_duration: generationDurationMs,
       source_text_hash: sourceTextHash,
@@ -222,26 +237,14 @@ export const getGenerationById = async ({
   return mapGenerationDetailRowToDTO(data);
 };
 
-const normalizeError = (error: unknown): { message: string; name?: string } => {
+const normalizeError = (error: unknown): { message: string; name?: string; code?: string } => {
+  if (error instanceof GoogleAIServiceError) {
+    return { message: error.message, name: error.name, code: error.code };
+  }
   if (error instanceof Error) {
     return { message: error.message, name: error.name };
   }
   return { message: "Unknown error" };
-};
-
-const mockGenerateProposals = async (): Promise<FlashcardProposalDTO[]> => {
-  const template = [
-    { front: "Key insight 1", back: "Mock answer for insight 1" },
-    { front: "Key insight 2", back: "Mock answer for insight 2" },
-    { front: "Key insight 3", back: "Mock answer for insight 3" },
-  ];
-
-  return template.map((item) => ({
-    id: randomUUID(),
-    front: item.front,
-    back: item.back,
-    source: "ai-full",
-  }));
 };
 
 const logGenerationError = async (
@@ -260,13 +263,13 @@ const logGenerationError = async (
     error: unknown;
   }
 ) => {
-  const { message: errorMessage } = normalizeError(error);
+  const { message: errorMessage, code: errorCode } = normalizeError(error);
   await supabase.from("generation_error_logs").insert({
     user_id: userId,
     model,
     source_text_hash: sourceTextHash,
     source_text_length: sourceTextLength,
-    error_code: "PROVIDER_ERROR",
+    error_code: errorCode ?? "PROVIDER_ERROR",
     error_message: errorMessage,
   });
 };

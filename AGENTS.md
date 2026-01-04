@@ -43,5 +43,5 @@ Note: pre-commit runs `npx lint-staged` (see `.husky/pre-commit`), so keep stage
 
 ## Security & Configuration Tips
 
-- Copy `.env.example` to `.env` and fill: `SUPABASE_URL`, `SUPABASE_KEY`, `OPENROUTER_API_KEY`.
+- Copy `.env.example` to `.env` and fill: `SUPABASE_URL`, `SUPABASE_KEY`, `GEMINI_API_KEY`.
 - Never commit secrets; keep credentials in local env and CI/CD secrets.

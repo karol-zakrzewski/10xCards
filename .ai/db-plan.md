@@ -28,7 +28,7 @@ Agreguje pojedynczą sesję generowania fiszek przez AI (metryki i audyt). Relac
 | --- | --- | --- | --- |
 | `id` | `bigint` | PK, `GENERATED ALWAYS AS IDENTITY` | Id generacji |
 | `user_id` | `uuid` | NOT NULL, FK → `auth.users(id)` ON DELETE CASCADE | Właściciel generacji |
-| `model` | `varchar(100)` | NOT NULL | Id/model z OpenRouter |
+| `model` | `varchar(100)` | NOT NULL | Id/model z Google Gemini |
 | `generated_count` | `integer` | NOT NULL | Liczba fiszek wygenerowanych |
 | `accepted_unedited_count` | `integer` | NULL | Liczba zaakceptowanych bez edycji |
 | `accepted_edited_count` | `integer` | NULL | Liczba zaakceptowanych po edycji |

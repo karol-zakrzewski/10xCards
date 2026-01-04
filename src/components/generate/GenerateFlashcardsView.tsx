@@ -222,6 +222,7 @@ const GenerateFlashcardsView = () => {
         validation={validation}
         canGenerate={canGenerate}
         isGenerating={isGenerating}
+        isSaving={isSaving}
         onGenerate={handleGenerate}
         onClear={handleClear}
         disableGenerateReason={disableGenerateReason}

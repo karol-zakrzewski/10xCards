@@ -33,7 +33,7 @@
     "data": [
       {
         "id": 123,
-        "model": "openrouter/model-id",
+        "model": "gemini-2.5-flash",
         "generatedCount": 12,
         "acceptedUneditedCount": 7,
         "acceptedEditedCount": 2,

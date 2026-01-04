@@ -44,7 +44,7 @@ Backend (planned for MVP)
 
 AI (planned for MVP)
 
-- OpenRouter (model gateway)
+- Google Gemini (model gateway)
 
 Tooling
 
@@ -74,7 +74,7 @@ npm install
 
 # 3) configure environment variables
 cp .env.example .env
-# fill in: SUPABASE_URL, SUPABASE_KEY, OPENROUTER_API_KEY
+# fill in: SUPABASE_URL, SUPABASE_KEY, GEMINI_API_KEY
 ```
 
 Run the app
@@ -137,9 +137,9 @@ This repository currently contains the Astro/React/Tailwind scaffold; MVP featur
 
 - [x] MVP defined (`.ai/prd.md`)
 - [x] Tech stack selected (`.ai/tech-stack.md`)
-- [ ] Supabase schema + RLS
+- [x] Supabase schema
 - [ ] Auth screens and session handling
-- [ ] AI generation flow (OpenRouter) + card curation
+- [x] AI generation flow (Google Gemini) + card curation
 - [ ] Review flow (spaced repetition) — post-MVP
 - [ ] Playwright end-to-end tests
 - [ ] CI/CD + deployment

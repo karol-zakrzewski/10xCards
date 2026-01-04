@@ -54,7 +54,7 @@ Uruchamia generację propozycji fiszek z dostarczonego tekstu, zapisuje metryki 
 2. Parsowanie i walidacja body Zod → `GenerationCreateCommand`.
 3. Service `generations.service.ts`:
    - Oblicz `source_text_length` i `source_text_hash` (np. SHA256).
-   - Wywołaj zmockowany provider AI (OpenRouter) z `sourceText`, zmierz czas (`generation_duration`).
+   - Wywołaj zmockowany provider AI (Google Gemini) z `sourceText`, zmierz czas (`generation_duration`).
    - Zmapuj wynik na `proposals` (`front`, `back`, `source: "ai-full"`), policz `generated_count`.
    - Zapisz metrykę w `public.generations` (fields: `user_id`, `model`, `generated_count`, `generation_duration`, `source_text_hash`, `source_text_length`).
 4. Zwrot DTO z nowego `generation` rekordu + `proposals` (propozycje nie zapisane w DB).

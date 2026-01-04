@@ -2,7 +2,7 @@
 
 > Założenia:
 >
-> - API jest wystawione jako endpointy serwerowe Astro (np. `src/pages/api/v1/**`) i komunikuje się z Supabase (PostgreSQL + Auth + RLS) oraz OpenRouter.
+> - API jest wystawione jako endpointy serwerowe Astro (np. `src/pages/api/v1/**`) i komunikuje się z Supabase (PostgreSQL + Auth + RLS) oraz Google AI (Gemini).
 > - Stan “fiszek przed zapisem” (zaakceptowane/odrzucone/edytowane propozycje) jest przechowywany po stronie klienta; API zapisuje do bazy tylko zaakceptowane fiszki.
 > - Długość tekstu wejściowego do generacji jest walidowana w zakresie **1000–10000 znaków** (spójnie z ograniczeniami w DB).
 
@@ -65,7 +65,7 @@
   - `400 Bad Request` – błędny payload/`sourceText` poza zakresem
   - `401 Unauthorized` – brak/niepoprawny token
   - `429 Too Many Requests` – limit generacji (rate limit)
-  - `502 Bad Gateway` – błąd dostawcy AI (OpenRouter); dodatkowo zapis do `public.generation_error_logs`
+  - `502 Bad Gateway` – błąd dostawcy AI (Google Gemini); dodatkowo zapis do `public.generation_error_logs`
 
 #### GET `/generations`
 
@@ -86,7 +86,7 @@
     "data": [
       {
         "id": 123,
-        "model": "openrouter/model-id",
+        "model": "gemini-2.5-flash",
         "generatedCount": 12,
         "acceptedUneditedCount": 7,
         "acceptedEditedCount": 2,
@@ -300,7 +300,7 @@
     "data": [
       {
         "id": 456,
-        "model": "openrouter/model-id",
+        "model": "gemini-2.5-flash",
         "sourceTextHash": "hex-or-base64",
         "sourceTextLength": 2500,
         "errorCode": "OPENROUTER_TIMEOUT",
@@ -375,7 +375,7 @@
 
 #### `generations`
 
-- `model`: wymagane (identyfikator modelu OpenRouter)
+- `model`: wymagane (identyfikator modelu Google Gemini)
 - `sourceTextLength`: wymagane, **1000–10000** (API nie przycina automatycznie tekstu; odrzuca spoza zakresu)
 - `generatedCount`: wymagane, liczba > 0
 - `generationDurationMs`: wymagane, liczba całkowita >= 0
@@ -390,7 +390,7 @@
 1. **Generowanie AI**:
    - `POST /generations`:
      - waliduje `sourceText` (długość),
-     - wywołuje OpenRouter,
+     - wywołuje Google AI (Gemini),
      - mapuje odpowiedź na listę `{front, back}`,
      - zapisuje metryki do `public.generations`,
      - w razie błędu zapisuje do `public.generation_error_logs` i zwraca komunikat.
@@ -418,7 +418,7 @@
   - `POST /flashcards:bulkCreate`: limit wielkości `items` (np. max 50) i rozmiaru payloadu.
 - **Ochrona przed nadużyciami**:
   - walidacja rozmiaru `sourceText`, `front`, `back` na wejściu,
-  - limit czasu dla requestów do OpenRouter (timeout) + bezpieczne komunikaty błędów.
+  - limit czasu dla requestów do Google AI (timeout) + bezpieczne komunikaty błędów.
 - **Paginacja `page/limit`**:
   - implementowana jako `LIMIT/OFFSET` + query zliczające (`total`) dla tych samych filtrów.
 - **Spójność danych**:
