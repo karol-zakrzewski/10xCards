@@ -1,0 +1,85 @@
+---
+import Layout from "@/layouts/Layout.astro";
+
+interface Props {
+  title?: string;
+}
+
+const { title = "10xCards" } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+const navItems = [
+  { label: "Zaloguj się", href: "/login" },
+  { label: "Załóż konto", href: "/register" },
+];
+---
+
+<Layout title={title}>
+  <div
+    class="public-auth relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(240,233,214,0.6),_transparent_55%),radial-gradient(circle_at_20%_20%,_rgba(187,223,218,0.45),_transparent_40%)] text-foreground"
+  >
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute -left-32 top-12 h-64 w-64 rounded-full bg-emerald-200/40 blur-[90px]"
+    >
+    </div>
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute right-[-120px] top-[-120px] h-80 w-80 rounded-full bg-amber-200/50 blur-[110px]"
+    >
+    </div>
+
+    <header class="relative z-10 border-b border-border/70 bg-white/70 backdrop-blur">
+      <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-6 py-4">
+        <div class="flex items-center gap-3">
+          <span
+            class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-foreground text-base font-semibold text-background"
+          >
+            10x
+          </span>
+          <div class="leading-tight">
+            <p class="text-sm font-semibold uppercase tracking-[0.25em] text-muted-foreground">10xCards</p>
+            <p class="text-xs text-muted-foreground">Ucz się szybciej, powtarzaj mądrzej</p>
+          </div>
+        </div>
+        <nav class="flex items-center gap-2 text-sm font-medium" aria-label="Nawigacja publiczna">
+          {
+            navItems.map((item) => {
+              const isActive = currentPath === item.href;
+              return (
+                <a
+                  href={item.href}
+                  class:list={[
+                    "rounded-full px-4 py-2 transition",
+                    isActive ? "bg-foreground text-background shadow-sm" : "text-foreground/80 hover:bg-foreground/10",
+                  ]}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {item.label}
+                </a>
+              );
+            })
+          }
+        </nav>
+      </div>
+    </header>
+
+    <main class="relative z-10 mx-auto flex w-full max-w-6xl flex-1 items-center px-6 py-12 lg:py-20">
+      <slot />
+    </main>
+  </div>
+
+  <style is:global>
+    @import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+    .public-auth {
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+    }
+
+    .public-auth h1,
+    .public-auth h2,
+    .public-auth h3 {
+      font-family: "Fraunces", "Times New Roman", serif;
+    }
+  </style>
+</Layout>
