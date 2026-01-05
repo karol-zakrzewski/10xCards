@@ -115,6 +115,14 @@ Kryteria akceptacji:
 - Tylko zalogowany użytkownik może wyświetlać, edytować i usuwać swoje fiszki.
 - Nie ma dostępu do fiszek innych użytkowników ani możliwości współdzielenia.
 
+ID: US-010
+Tytuł: Usuwanie konta uzytkownika
+Opis: Jako zalogowany użytkownik chcę mieć możliwość usunięcia swojego konta. Powinno być to dostępne na podstronie z profilem użytkownika.
+Kryteria akceptacji:
+
+- Tylko właściciel konta może usunąć swoje konto
+- Wraz z usunięciem konta, powinny zostać usunięte wszystkie wygenerowane fiszki, generacje.
+
 ## 6. Metryki sukcesu
 
 1. 75% wygenerowanych przez AI fiszek jest akceptowanych przez użytkownika.
