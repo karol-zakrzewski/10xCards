@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { jsonError } from "@/lib/api/responses";
 import {
   deleteFlashcard,
@@ -12,12 +11,12 @@ import { flashcardIdParamSchema, flashcardUpdateSchema } from "@/lib/validation/
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ params, request, locals }) => {
+export const GET: APIRoute = async ({ params, locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
 
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || authHeader.trim() === "") {
-    return jsonError(401, "UNAUTHORIZED", "Missing Authorization header.");
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
   }
 
   const parsed = flashcardIdParamSchema.safeParse(params);
@@ -26,10 +25,8 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
     return jsonError(400, "VALIDATION_ERROR", message);
   }
 
-  const userId = DEFAULT_USER_ID;
-
   try {
-    const flashcard = await getFlashcardById({ supabase, userId, id: parsed.data.id });
+    const flashcard = await getFlashcardById({ supabase, userId: user.id, id: parsed.data.id });
     return new Response(JSON.stringify({ data: flashcard }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -46,10 +43,10 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
 
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || authHeader.trim() === "") {
-    return jsonError(401, "UNAUTHORIZED", "Missing Authorization header.");
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
   }
 
   const parsedParams = flashcardIdParamSchema.safeParse(params);
@@ -68,10 +65,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     return jsonError(400, "VALIDATION_ERROR", message);
   }
 
-  const userId = DEFAULT_USER_ID;
-
   try {
-    const flashcard = await updateFlashcard({ supabase, userId }, parsedParams.data.id, body);
+    const flashcard = await updateFlashcard({ supabase, userId: user.id }, parsedParams.data.id, body);
     return new Response(JSON.stringify({ data: flashcard }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -86,12 +81,12 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ params, request, locals }) => {
+export const DELETE: APIRoute = async ({ params, locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
 
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || authHeader.trim() === "") {
-    return jsonError(401, "UNAUTHORIZED", "Missing Authorization header.");
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
   }
 
   const parsed = flashcardIdParamSchema.safeParse(params);
@@ -100,10 +95,8 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
     return jsonError(400, "VALIDATION_ERROR", message);
   }
 
-  const userId = DEFAULT_USER_ID;
-
   try {
-    const result = await deleteFlashcard({ supabase, userId }, parsed.data.id);
+    const result = await deleteFlashcard({ supabase, userId: user.id }, parsed.data.id);
     return new Response(JSON.stringify({ data: result }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { jsonError } from "@/lib/api/responses";
 import { getGenerationById, GenerationServiceError } from "@/lib/services/generations.service";
 import { generationIdParamSchema } from "@/lib/validation/generations";
@@ -9,6 +8,11 @@ export const prerender = false;
 
 export const GET: APIRoute = async ({ params, locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
+
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
+  }
 
   const parsed = generationIdParamSchema.safeParse(params);
   if (!parsed.success) {
@@ -17,11 +21,8 @@ export const GET: APIRoute = async ({ params, locals }) => {
   }
   const id = parsed.data.id;
 
-  // TODO: replace DEFAULT_USER_ID with authenticated user id when auth is wired.
-  const userId = DEFAULT_USER_ID;
-
   try {
-    const generation = await getGenerationById({ supabase, userId, id });
+    const generation = await getGenerationById({ supabase, userId: user.id, id });
 
     return new Response(JSON.stringify({ data: generation }), {
       status: 200,

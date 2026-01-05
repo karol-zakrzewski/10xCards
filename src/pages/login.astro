@@ -1,6 +1,12 @@
 ---
 import LoginView from "@/components/auth/LoginView";
 import PublicLayout from "@/layouts/PublicLayout.astro";
+
+export const prerender = false;
+
+if (Astro.locals.user) {
+  return Astro.redirect("/generate");
+}
 ---
 
 <PublicLayout title="Logowanie | 10xCards">

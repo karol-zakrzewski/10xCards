@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 
 import type { GenerationCreateCommand, GenerationListItemDTO, PagedResponse } from "@/types";
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { jsonError } from "@/lib/api/responses";
 import { generateFromText, GenerationServiceError, listGenerations } from "@/lib/services/generations.service";
 import { generationCreateSchema, generationListQuerySchema } from "@/lib/validation/generations";
@@ -10,6 +9,11 @@ export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
+
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
+  }
   let body: GenerationCreateCommand;
   try {
     const json = await request.json();
@@ -23,7 +27,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const result = await generateFromText(body, {
       supabase,
-      userId: DEFAULT_USER_ID,
+      userId: user.id,
     });
 
     return new Response(JSON.stringify(result), {
@@ -43,6 +47,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
+
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
+  }
 
   let query: ReturnType<typeof generationListQuerySchema.parse>;
   try {
@@ -56,7 +65,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   try {
     const result: PagedResponse<GenerationListItemDTO> = await listGenerations({
       supabase,
-      userId: DEFAULT_USER_ID,
+      userId: user.id,
       page: query.page,
       limit: query.limit,
       order: query.order,

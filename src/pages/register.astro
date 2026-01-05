@@ -1,6 +1,12 @@
 ---
 import RegisterView from "@/components/auth/RegisterView";
 import PublicLayout from "@/layouts/PublicLayout.astro";
+
+export const prerender = false;
+
+if (Astro.locals.user) {
+  return Astro.redirect("/generate");
+}
 ---
 
 <PublicLayout title="Rejestracja | 10xCards">

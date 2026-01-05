@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { jsonError } from "@/lib/api/responses";
 import { createFlashcard, FlashcardServiceError, listFlashcards } from "@/lib/services/flashcards.service";
 import { flashcardCreateSchema, flashcardListQuerySchema } from "@/lib/validation/flashcards";
@@ -10,10 +9,10 @@ export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
 
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader) {
-    return jsonError(401, "UNAUTHORIZED", "Missing Authorization header.");
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
   }
 
   let body: FlashcardCreateCommand;
@@ -30,10 +29,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return jsonError(400, "VALIDATION_ERROR", message);
   }
 
-  const userId = DEFAULT_USER_ID; // TODO: replace with authenticated user id when auth is added
-
   try {
-    const flashcard = await createFlashcard({ supabase, userId }, body);
+    const flashcard = await createFlashcard({ supabase, userId: user.id }, body);
 
     return new Response(JSON.stringify({ data: flashcard }), {
       status: 201,
@@ -52,10 +49,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
 
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || authHeader.trim() === "") {
-    return jsonError(401, "UNAUTHORIZED", "Missing Authorization header.");
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
   }
 
   let query: ReturnType<typeof flashcardListQuerySchema.parse>;
@@ -67,12 +64,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
     return jsonError(400, "VALIDATION_ERROR", message);
   }
 
-  const userId = DEFAULT_USER_ID; // TODO: replace with authenticated user id when auth is added
-
   try {
     const result: PagedResponse<FlashcardDTO> = await listFlashcards({
       supabase,
-      userId,
+      userId: user.id,
       page: query.page,
       limit: query.limit,
       order: query.order,

@@ -1,10 +1,11 @@
 import * as React from "react";
 
-import { fetchJson, getAuthorizationHeader, ApiError } from "@/lib/api/client";
+import { fetchJson, ApiError } from "@/lib/api/client";
 import type { DeletedResponse } from "@/types";
 import type { ApiErrorVM, ApiRequestState } from "@/lib/viewmodels/accountViewmodels";
 
 const ME_ENDPOINT = "/api/v1/me";
+const SIGN_OUT_ENDPOINT = "/api/v1/auth/sign-out";
 
 const mapApiError = (error: unknown): ApiErrorVM => {
   if (error instanceof ApiError) {
@@ -37,14 +38,6 @@ const goTo = (href: string) => {
   window.location.href = href;
 };
 
-const clearAuthTokens = () => {
-  window.localStorage.removeItem("supabase_access_token");
-  window.localStorage.removeItem("supabase_refresh_token");
-  window.localStorage.removeItem("access_token");
-  window.localStorage.removeItem("sb-access-token");
-  window.localStorage.removeItem("sb-refresh-token");
-};
-
 export const useAccountActions = () => {
   const [deleteState, setDeleteState] = React.useState<ApiRequestState>("idle");
   const [deleteError, setDeleteError] = React.useState<ApiErrorVM | undefined>();
@@ -61,9 +54,12 @@ export const useAccountActions = () => {
     }
 
     setLogoutState("loading");
-    clearAuthTokens();
-    setLogoutState("success");
-    goTo("/login");
+    fetchJson(SIGN_OUT_ENDPOINT, { method: "POST" })
+      .catch(() => undefined)
+      .finally(() => {
+        setLogoutState("success");
+        goTo("/login");
+      });
   }, [logoutState]);
 
   const deleteAccount = React.useCallback(async () => {
@@ -79,7 +75,6 @@ export const useAccountActions = () => {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          ...getAuthorizationHeader(),
         },
         body: JSON.stringify({ confirm: true }),
       });
@@ -87,7 +82,6 @@ export const useAccountActions = () => {
       setDeleteState("success");
 
       if (response.data.deleted) {
-        clearAuthTokens();
         goTo("/login");
       }
 
@@ -98,7 +92,6 @@ export const useAccountActions = () => {
       setDeleteState("error");
 
       if (mapped.httpStatus === 401 || mapped.code === "UNAUTHORIZED") {
-        clearAuthTokens();
         goTo("/login");
       }
 

@@ -1,17 +1,41 @@
 import { createClient } from "@supabase/supabase-js";
+import { createServerClient, type CookieOptions, type CookieOptionsWithName, parseCookieHeader } from "@supabase/ssr";
+import type { AstroCookies } from "astro";
 
-import type { Database } from "../db/database.types.ts";
+import type { Database } from "@/db/database.types";
 
 const supabaseUrl = import.meta.env.SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
 const supabaseServiceRoleKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+export type SupabaseClient = import("@supabase/supabase-js").SupabaseClient<Database>;
 
-// Prefer service-role key on the server to bypass RLS when auth isn’t wired yet.
-// Falls back to anon for environments where the service key isn’t provided.
-const supabaseServerKey = supabaseServiceRoleKey ?? supabaseAnonKey;
+export const cookieOptions: CookieOptionsWithName = {
+  path: "/",
+  secure: import.meta.env.PROD,
+  httpOnly: true,
+  sameSite: "lax",
+};
 
-export const supabaseClient = createClient<Database>(supabaseUrl, supabaseServerKey);
+export const createSupabaseServerInstance = (context: { headers: Headers; cookies: AstroCookies }) => {
+  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+    cookieOptions,
+    cookies: {
+      getAll() {
+        return parseCookieHeader(context.headers.get("Cookie") ?? "");
+      },
+      setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          context.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
+};
 
-export type SupabaseClient = typeof supabaseClient;
+export const createSupabaseAdminClient = () => {
+  if (!supabaseServiceRoleKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for admin operations.");
+  }
 
-export const DEFAULT_USER_ID = "0347ab53-210e-450e-9cb3-1ff0abd82f9a";
+  return createClient<Database>(supabaseUrl, supabaseServiceRoleKey);
+};

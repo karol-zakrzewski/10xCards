@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { APIRoute } from "astro";
 
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { jsonError } from "@/lib/api/responses";
 import { deleteMe, getMe, MeServiceError } from "@/lib/services/me.service";
 
@@ -11,18 +10,16 @@ const deleteMeSchema = z.object({
   confirm: z.boolean().optional(),
 });
 
-export const GET: APIRoute = async ({ request, locals }) => {
+export const GET: APIRoute = async ({ locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
 
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || authHeader.trim() === "") {
-    return jsonError(401, "UNAUTHORIZED", "Missing Authorization header.");
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
   }
 
-  const userId = DEFAULT_USER_ID;
-
   try {
-    const result = await getMe({ supabase, userId });
+    const result = await getMe({ supabase, user });
     return new Response(JSON.stringify({ data: result }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -39,10 +36,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
 export const DELETE: APIRoute = async ({ request, locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
 
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || authHeader.trim() === "") {
-    return jsonError(401, "UNAUTHORIZED", "Missing Authorization header.");
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
   }
 
   let confirm = false;
@@ -59,10 +56,8 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     return jsonError(400, "VALIDATION_ERROR", "Account deletion requires confirm=true.");
   }
 
-  const userId = DEFAULT_USER_ID;
-
   try {
-    const result = await deleteMe({ supabase, userId });
+    const result = await deleteMe({ userSupabase: supabase, userId: user.id });
     return new Response(JSON.stringify({ data: result }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { jsonError } from "@/lib/api/responses";
 import { bulkCreateFlashcards, FlashcardServiceError } from "@/lib/services/flashcards.service";
 import { bulkFlashcardsCreateSchema } from "@/lib/validation/flashcards";
@@ -10,10 +9,10 @@ export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
 
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || authHeader.trim() === "") {
-    return jsonError(401, "UNAUTHORIZED", "Missing Authorization header.");
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
   }
 
   let body: BulkFlashcardsCreateCommand;
@@ -33,10 +32,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return jsonError(400, "VALIDATION_ERROR", message);
   }
 
-  const userId = DEFAULT_USER_ID; // TODO: replace with authenticated user id when auth is added
-
   try {
-    const result = await bulkCreateFlashcards({ supabase, userId }, body);
+    const result = await bulkCreateFlashcards({ supabase, userId: user.id }, body);
 
     return new Response(JSON.stringify({ data: result }), {
       status: 201,

@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { jsonError } from "@/lib/api/responses";
 import { GenerationErrorLogServiceError, listGenerationErrorLogs } from "@/lib/services/generationErrorLogs.service";
 import { generationErrorLogListQuerySchema } from "@/lib/validation/generationErrorLogs";
@@ -9,10 +8,10 @@ export const prerender = false;
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const supabase = locals.supabase;
+  const user = locals.user;
 
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || authHeader.trim() === "") {
-    return jsonError(401, "UNAUTHORIZED", "Missing Authorization header.");
+  if (!user) {
+    return jsonError(401, "UNAUTHORIZED", "Missing authenticated user.");
   }
 
   let query: ReturnType<typeof generationErrorLogListQuerySchema.parse>;
@@ -24,12 +23,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
     return jsonError(400, "VALIDATION_ERROR", message);
   }
 
-  const userId = DEFAULT_USER_ID;
-
   try {
     const result = await listGenerationErrorLogs({
       supabase,
-      userId,
+      userId: user.id,
       page: query.page,
       limit: query.limit,
       order: query.order,

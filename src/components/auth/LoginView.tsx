@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getEmailError, getPasswordError } from "@/components/auth/authValidation";
+import { fetchJson } from "@/lib/api/client";
+
+const LOGIN_ENDPOINT = "/api/v1/auth/sign-in";
 
 const benefits = [
   {
@@ -28,7 +31,8 @@ const LoginView = () => {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [touched, setTouched] = React.useState({ email: false, password: false });
-  const [submitMessage, setSubmitMessage] = React.useState<string | null>(null);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const validation = React.useMemo(() => {
     return {
@@ -55,18 +59,40 @@ const LoginView = () => {
   const handlePasswordBlur = React.useCallback(() => handleBlur("password"), [handleBlur]);
 
   const handleSubmit = React.useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setTouched({ email: true, password: true });
-      setSubmitMessage(null);
+      setSubmitError(null);
 
       if (!isValid) {
         return;
       }
 
-      setSubmitMessage("Formularz jest gotowy do podłączenia logowania w kolejnym kroku.");
+      if (isSubmitting) {
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      try {
+        await fetchJson(LOGIN_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        });
+
+        window.location.href = "/generate";
+      } catch {
+        setSubmitError("Nieprawidłowy e-mail lub hasło.");
+        setIsSubmitting(false);
+      }
     },
-    [isValid]
+    [email, password, isSubmitting, isValid]
   );
 
   const shouldShowEmailError = touched.email && validation.email;
@@ -111,6 +137,7 @@ const LoginView = () => {
                 onBlur={handleEmailBlur}
                 aria-invalid={shouldShowEmailError ? "true" : "false"}
                 autoComplete="email"
+                disabled={isSubmitting}
               />
               {shouldShowEmailError ? <p className="text-xs text-destructive">{validation.email}</p> : null}
             </div>
@@ -128,6 +155,7 @@ const LoginView = () => {
                 onBlur={handlePasswordBlur}
                 aria-invalid={shouldShowPasswordError ? "true" : "false"}
                 autoComplete="current-password"
+                disabled={isSubmitting}
               />
               {shouldShowPasswordError ? <p className="text-xs text-destructive">{validation.password}</p> : null}
             </div>
@@ -143,12 +171,14 @@ const LoginView = () => {
               <a href="/recover" className="text-xs font-medium text-muted-foreground hover:text-foreground">
                 Nie pamiętam hasła
               </a>
-              <Button type="submit">Zaloguj się</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Logowanie…" : "Zaloguj się"}
+              </Button>
             </div>
 
-            {submitMessage ? (
-              <Alert>
-                <AlertDescription>{submitMessage}</AlertDescription>
+            {submitError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{submitError}</AlertDescription>
               </Alert>
             ) : null}
           </form>

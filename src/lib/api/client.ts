@@ -15,23 +15,16 @@ export class ApiError extends Error {
 }
 
 export const getAuthorizationHeader = (): Record<string, string> => {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
-  const candidates = [
-    window.localStorage.getItem("supabase_access_token"),
-    window.localStorage.getItem("access_token"),
-    window.localStorage.getItem("sb-access-token"),
-  ].filter(Boolean);
-
-  const token = candidates[0];
-  const value = token ? `Bearer ${token}` : "Bearer dev";
-  return { Authorization: value };
+  return {};
 };
 
 export const fetchJson = async <T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> => {
-  const response = await fetch(input, init);
+  const { headers, credentials, ...rest } = init ?? {};
+  const response = await fetch(input, {
+    ...rest,
+    headers,
+    credentials: credentials ?? "include",
+  });
   const contentType = response.headers.get("content-type") ?? "";
   const isJson = contentType.includes("application/json");
 
