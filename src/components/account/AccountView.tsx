@@ -25,19 +25,14 @@ const fallbackMe: MeViewModel = {
 
 const AccountView = () => {
   const { data, status, error: meError } = useMe();
-  const { deleteAccount, deleteState, deleteError, resetDeleteState, logout, logoutState } = useAccountActions();
+  const { deleteAccount, deleteState, deleteError, resetDeleteState } = useAccountActions();
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [deleteConfirmed, setDeleteConfirmed] = React.useState(false);
 
   const me = data ?? fallbackMe;
   const isLoading = status === "loading";
   const isDeleting = deleteState === "loading";
-  const isLoggingOut = logoutState === "loading";
-  const isBusy = isDeleting || isLoggingOut;
-
-  const handleLogout = React.useCallback(() => {
-    logout();
-  }, [logout]);
+  const isBusy = isDeleting;
 
   const handleOpenDelete = React.useCallback(() => {
     setDeleteDialogOpen(true);
@@ -74,7 +69,7 @@ const AccountView = () => {
           <AccountProfileCard user={me.user} isLoading={isLoading} error={meError} />
           <AccountStatsCard stats={me.stats} isLoading={isLoading} error={meError} />
         </div>
-        <AccountActionsCard onLogout={handleLogout} onOpenDelete={handleOpenDelete} isBusy={isBusy} />
+        <AccountActionsCard onOpenDelete={handleOpenDelete} isBusy={isBusy} />
       </div>
 
       <DeleteAccountDialog
