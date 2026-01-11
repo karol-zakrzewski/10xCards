@@ -16,7 +16,7 @@ export const cookieOptions: CookieOptionsWithName = {
   sameSite: "lax",
 };
 
-export const createSupabaseServerInstance = (context: { headers: Headers; cookies: AstroCookies }) => {
+export const createSupabaseServerInstance = (context: { headers: Headers; cookies?: AstroCookies }) => {
   return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
     cookieOptions,
     cookies: {
@@ -25,7 +25,7 @@ export const createSupabaseServerInstance = (context: { headers: Headers; cookie
       },
       setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          context.cookies.set(name, value, options);
+          context.cookies?.set(name, value, options);
         });
       },
     },

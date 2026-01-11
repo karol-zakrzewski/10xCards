@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getEmailError, getPasswordError } from "@/components/auth/authValidation";
+import { fetchJson } from "@/lib/api/client";
+
+const REGISTER_ENDPOINT = "/api/v1/auth/sign-up";
 
 const highlights = [
   {
@@ -29,6 +32,9 @@ const RegisterView = () => {
   const [password, setPassword] = React.useState("");
   const [touched, setTouched] = React.useState({ email: false, password: false });
   const [submitMessage, setSubmitMessage] = React.useState<string | null>(null);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSuccess, setIsSuccess] = React.useState(false);
 
   const validation = React.useMemo(() => {
     return {
@@ -55,18 +61,39 @@ const RegisterView = () => {
   const handlePasswordBlur = React.useCallback(() => handleBlur("password"), [handleBlur]);
 
   const handleSubmit = React.useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setTouched({ email: true, password: true });
       setSubmitMessage(null);
+      setSubmitError(null);
 
-      if (!isValid) {
+      if (!isValid || isSubmitting || isSuccess) {
         return;
       }
 
-      setSubmitMessage("Formularz jest gotowy do podłączenia rejestracji w kolejnym kroku.");
+      setIsSubmitting(true);
+
+      try {
+        await fetchJson(REGISTER_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        });
+
+        setIsSuccess(true);
+        setSubmitMessage("Konto zostało pomyślnie założone.");
+      } catch {
+        setSubmitError("Nie udało się utworzyć konta. Sprawdź dane i spróbuj ponownie.");
+      } finally {
+        setIsSubmitting(false);
+      }
     },
-    [isValid]
+    [email, isSubmitting, isSuccess, isValid, password]
   );
 
   const shouldShowEmailError = touched.email && validation.email;
@@ -95,6 +122,7 @@ const RegisterView = () => {
                 onBlur={handleEmailBlur}
                 aria-invalid={shouldShowEmailError ? "true" : "false"}
                 autoComplete="email"
+                disabled={isSubmitting || isSuccess}
               />
               {shouldShowEmailError ? <p className="text-xs text-destructive">{validation.email}</p> : null}
             </div>
@@ -112,6 +140,7 @@ const RegisterView = () => {
                 onBlur={handlePasswordBlur}
                 aria-invalid={shouldShowPasswordError ? "true" : "false"}
                 autoComplete="new-password"
+                disabled={isSubmitting || isSuccess}
               />
               {shouldShowPasswordError ? <p className="text-xs text-destructive">{validation.password}</p> : null}
             </div>
@@ -123,11 +152,25 @@ const RegisterView = () => {
               </a>
             </div>
 
-            <Button type="submit">Załóż konto</Button>
+            <Button type="submit" disabled={isSubmitting || isSuccess}>
+              {isSubmitting ? "Zakładanie konta…" : "Załóż konto"}
+            </Button>
 
             {submitMessage ? (
               <Alert>
-                <AlertDescription>{submitMessage}</AlertDescription>
+                <AlertDescription>
+                  {submitMessage}{" "}
+                  <a href="/login" className="font-medium text-foreground hover:underline">
+                    Przejdź do logowania
+                  </a>
+                  .
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
+            {submitError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{submitError}</AlertDescription>
               </Alert>
             ) : null}
           </form>
