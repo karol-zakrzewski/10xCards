@@ -11,6 +11,7 @@
 - [Tech stack](#tech-stack)
 - [Getting started locally](#getting-started-locally)
 - [Available scripts](#available-scripts)
+- [Testing](#testing)
 - [Project scope](#project-scope)
 - [Project status](#project-status)
 - [License](#license)
@@ -19,7 +20,7 @@
 
 10xCards is a minimalist flashcard app (**UI in Polish**) built as an MVP. It focuses on the shortest path from “I have a text” to “I have good cards I can review”:
 
-- Paste a short text (up to **1000 characters**) and generate a small set of Q/A flashcards with AI
+- Paste a short text (**1000–10000 characters**) and generate a small set of Q/A flashcards with AI
 - Edit each card, accept/reject it, and **bulk-save only accepted cards**
 - Create cards manually in the same editor
 - Store cards in **Supabase (PostgreSQL)** (review / spaced repetition planned post-MVP)
@@ -99,18 +100,44 @@ npm run preview
 - `npm run lint:fix` – run ESLint with `--fix`
 - `npm run format` – format with Prettier
 - `npm run astro` – run the Astro CLI
+- `npm run test` – run unit + integration tests once (Vitest)
+- `npm run test:watch` – run Vitest in watch mode
+- `npm run test:e2e` – run E2E tests (Playwright)
+- `npm run test:e2e:ui` – open Playwright UI runner
+- `npm run test:e2e:headed` – run Playwright with visible browser
+
+## Testing
+
+Test suite covers the critical MVP flows across multiple layers:
+
+- **Unit tests**: validation schemas, DTO mapping, and service logic (Vitest).
+- **Integration tests**: API routes + Supabase RLS and constraints (Vitest).
+- **E2E tests**: happy paths for auth, AI generation, curation, and flashcard CRUD (Playwright).
+
+Run tests locally
+
+```bash
+# install Playwright browsers once
+npx playwright install
+
+# unit + integration
+npm run test
+
+# e2e
+npm run test:e2e
+```
 
 ## Project scope
 
 MVP includes
 
-- AI flashcard generation from pasted text (**1000 character** hard limit; no auto-truncation)
+- AI flashcard generation from pasted text (**1000–10000 character** hard limit; no auto-truncation)
 - Manual card creation (front/back)
 - Review & curation flow: edit, accept/reject, delete
 - Bulk save of accepted cards; edits after acceptance require re-acceptance
 - Supabase persistence (cards with `user_id`, `front`, `back`, `source`, `generation_id`) with RLS enabled
 - Event logging for `generated`, `accepted`, `rejected` (for MVP metrics)
-- Authentication: sign up, sign in, password reset, delete account
+- Authentication: sign up, sign in, password reset, delete account (no email verification; no auto-login on sign up)
 - End-to-end tests (Playwright) for the main “happy paths”
 
 Out of scope (MVP)
@@ -138,7 +165,7 @@ This repository currently contains the Astro/React/Tailwind scaffold; MVP featur
 - [x] MVP defined (`.ai/prd.md`)
 - [x] Tech stack selected (`.ai/tech-stack.md`)
 - [x] Supabase schema
-- [ ] Auth screens and session handling
+- [x] Auth screens and session handling
 - [x] AI generation flow (Google Gemini) + card curation
 - [ ] Review flow (spaced repetition) — post-MVP
 - [ ] Playwright end-to-end tests

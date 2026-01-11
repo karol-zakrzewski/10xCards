@@ -31,5 +31,9 @@ pnpm-debug.log*
 .branches
 .temp
 
+# Testing
+playwright-report/
+test-results/
+
 # other
 lessons
