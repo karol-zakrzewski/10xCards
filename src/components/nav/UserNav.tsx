@@ -2,17 +2,18 @@ import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { useAccountActions } from "@/components/hooks/useAccountActions";
-import { useMe } from "@/components/hooks/useMe";
 
 const fallbackEmail = "—";
 
-const UserNav = () => {
-  const { data, status } = useMe();
+interface UserNavProps {
+  email?: string | null;
+}
+
+const UserNav = ({ email }: UserNavProps) => {
   const { logout, logoutState } = useAccountActions();
 
-  const isLoading = status === "loading";
   const isLoggingOut = logoutState === "loading";
-  const email = data?.user.email ?? fallbackEmail;
+  const safeEmail = email ?? fallbackEmail;
 
   const handleLogout = React.useCallback(() => {
     logout();
@@ -21,7 +22,7 @@ const UserNav = () => {
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
       <span className="rounded-md border border-border/60 bg-muted/40 px-3 py-1.5 text-xs font-medium text-muted-foreground">
-        {isLoading ? "Ładowanie..." : email}
+        {safeEmail}
       </span>
       <Button variant="outline" size="sm" onClick={handleLogout} disabled={isLoggingOut}>
         {isLoggingOut ? "Wylogowywanie..." : "Wyloguj"}

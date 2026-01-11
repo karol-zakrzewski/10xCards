@@ -2,6 +2,7 @@
 import UserNav from "@/components/nav/UserNav";
 
 const { currentPath = Astro.url.pathname } = Astro.props;
+const userEmail = Astro.locals.user?.email ?? "—";
 
 const navItems = [
   { label: "Generowanie", href: "/generate" },
@@ -47,7 +48,7 @@ const navItems = [
             Sesja powtórek — Wkrótce
           </span>
         </nav>
-        <UserNav client:load />
+        <UserNav client:load email={userEmail} />
       </div>
     </div>
   </header>
