@@ -13,6 +13,9 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Setup Node
         uses: ./.github/actions/setup-node
 
@@ -24,6 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Setup Node
         uses: ./.github/actions/setup-node
 
@@ -49,6 +55,9 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Setup Node
         uses: ./.github/actions/setup-node
 
