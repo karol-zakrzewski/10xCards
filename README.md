@@ -169,7 +169,7 @@ This repository currently contains the Astro/React/Tailwind scaffold; MVP featur
 - [x] AI generation flow (Google Gemini) + card curation
 - [ ] Review flow (spaced repetition) — post-MVP
 - [ ] Playwright end-to-end tests
-- [ ] CI/CD + deployment
+- [x] CI/CD + deployment
 
 ## License
 
