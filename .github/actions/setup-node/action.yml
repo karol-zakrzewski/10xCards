@@ -1,0 +1,22 @@
+name: Setup Node and install dependencies
+description: Checkout repository, set up Node.js, and install dependencies with npm ci
+inputs:
+  node-version-file:
+    description: Path to the Node version file
+    required: false
+    default: .nvmrc
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+
+    - name: Setup Node
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: ${{ inputs.node-version-file }}
+        cache: npm
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
