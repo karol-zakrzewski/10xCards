@@ -11,7 +11,8 @@ export const flashcardProposalsSchema = z
           })
           .strict()
       )
-      .min(1),
+      .min(1)
+      .max(12),
   })
   .strict();
 
@@ -27,6 +28,7 @@ export const flashcardProposalsJsonSchema = {
       proposals: {
         type: "array",
         minItems: 1,
+        maxItems: 12,
         items: {
           type: "object",
           additionalProperties: false,

@@ -18,7 +18,7 @@ const DEFAULT_GOOGLE_MODEL = "gemini-2.5-flash";
 const googleAiService = new GoogleAIService({
   apiKey: import.meta.env.GEMINI_API_KEY,
   defaultModel: DEFAULT_GOOGLE_MODEL,
-  defaultParams: { temperature: 0.2, top_p: 1, max_tokens: 900 },
+  defaultParams: { temperature: 0.2, top_p: 1, max_tokens: 2400 },
 });
 
 export class GenerationServiceError extends Error {
