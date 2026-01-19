@@ -115,7 +115,7 @@ jobs:
       - lint
       - unit-tests
       - e2e-tests
-    if: ${{ github.event_name == 'push' && needs.lint.result == 'success' && needs.unit-tests.result == 'success' && needs.e2e-tests.result == 'success' }}
+    if: ${{ needs.lint.result == 'success' && needs.unit-tests.result == 'success' && needs.e2e-tests.result == 'success' }}
     permissions:
       contents: read
       deployments: write
