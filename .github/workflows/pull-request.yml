@@ -120,7 +120,7 @@ jobs:
     # - lint
     # - unit-tests
     # - e2e-tests
-    if: ${{ needs.lint.result == 'success' && needs.unit-tests.result == 'success' && needs.e2e-tests.result == 'success' }}
+
     permissions:
       contents: read
       deployments: write
