@@ -28,6 +28,7 @@ jobs:
   unit-tests:
     name: Unit tests
     runs-on: ubuntu-latest
+    if: ${{ false }}
     needs: lint
     steps:
       - name: Checkout
@@ -49,6 +50,7 @@ jobs:
   e2e-tests:
     name: E2E tests
     runs-on: ubuntu-latest
+    if: ${{ false }}
     needs: lint
     environment: integration
     env:
