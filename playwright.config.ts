@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
 
-const url = process.env.E2E_BASE_URL || "http://localhost:3000";
+const baseURL = process.env.E2E_BASE_URL;
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -11,14 +11,14 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: [["html", { open: "never" }]],
   use: {
-    baseURL: url,
+    baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
   webServer: {
-    command: "npm run dev -- --host --port 4321",
-    url: url,
+    command: "npm run dev",
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
   },
   projects: [
