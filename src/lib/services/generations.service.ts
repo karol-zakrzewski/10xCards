@@ -115,11 +115,34 @@ export const generateFromText = async (
   const startedAt = performance.now();
 
   const usedModel = model;
+  console.info("[generations.service] generateFromText start", {
+    userId,
+    model: usedModel,
+    sourceTextLength,
+    sourceTextHash,
+  });
 
   let proposals: FlashcardProposalDTO[];
   try {
     proposals = await googleAiService.generateFlashcardProposalsFromText({ sourceText, model: usedModel });
+    console.info("[generations.service] AI proposals received", {
+      userId,
+      model: usedModel,
+      proposalsCount: proposals.length,
+    });
   } catch (error) {
+    console.error("[generations.service] AI generation error", {
+      userId,
+      model: usedModel,
+      sourceTextLength,
+      sourceTextHash,
+      error:
+        error instanceof GoogleAIServiceError
+          ? { name: error.name, code: error.code, message: error.message, status: error.status, details: error.details }
+          : error instanceof Error
+            ? { name: error.name, message: error.message }
+            : error,
+    });
     await logGenerationError(supabase, {
       userId,
       model: usedModel,
@@ -156,11 +179,23 @@ export const generateFromText = async (
     .single();
 
   if (generationInsertError || !generationRow) {
+    console.error("[generations.service] failed to save generation metrics", {
+      userId,
+      model: usedModel,
+      generationInsertError: generationInsertError?.message,
+    });
     throw new GenerationServiceError(500, "INTERNAL_ERROR", "Failed to save generation metrics.", {
       hint: generationInsertError?.message,
     });
   }
 
+  console.info("[generations.service] generation saved", {
+    userId,
+    model: usedModel,
+    generationId: generationRow.id,
+    generatedCount: generationRow.generated_count,
+    generationDurationMs,
+  });
   return {
     generation: {
       id: generationRow.id,
