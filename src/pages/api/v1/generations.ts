@@ -2,12 +2,13 @@ import type { APIRoute } from "astro";
 
 import type { GenerationCreateCommand, GenerationListItemDTO, PagedResponse } from "@/types";
 import { jsonError } from "@/lib/api/responses";
-import { GenerationServiceError, listGenerations } from "@/lib/services/generations.service";
+import { generateFromText, GenerationServiceError, listGenerations } from "@/lib/services/generations.service";
 import { generationCreateSchema, generationListQuerySchema } from "@/lib/validation/generations";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
+  const supabase = locals.supabase;
   const user = locals.user;
   const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
@@ -39,18 +40,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     console.info("[generations:POST] calling generateFromText", { requestId });
-    // const result = await generateFromText(body, {
-    //   supabase,
-    //   userId: user.id,
-    // });
+    const result = await generateFromText(body, {
+      supabase,
+      userId: user.id,
+    });
 
-    const result = true;
-
-    // console.info("[generations:POST] success", {
-    //   requestId,
-    //   generationId: result.generation.id,
-    //   generatedCount: result.generation.generatedCount,
-    // });
     return new Response(JSON.stringify(result), {
       status: 201,
       headers: { "Content-Type": "application/json" },

@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { performance } from "node:perf_hooks";
 
 import type { Tables } from "@/db/database.types";
 import type { SupabaseClient } from "@/db/supabase.client";
@@ -112,7 +111,7 @@ export const generateFromText = async (
   const sourceTextLength = sourceText.length;
   const sourceTextHash = createHash("md5").update(sourceText).digest("hex");
 
-  const startedAt = performance.now();
+  // const startedAt = performance.now();
 
   const usedModel = model;
   console.info("[generations.service] generateFromText start", {
@@ -162,7 +161,7 @@ export const generateFromText = async (
     });
   }
 
-  const generationDurationMs = Math.max(1, Math.round(performance.now() - startedAt));
+  // const generationDurationMs = Math.max(1, Math.round(performance.now() - startedAt));
   const generatedCount = proposals.length;
 
   const { data: generationRow, error: generationInsertError } = await supabase
@@ -171,7 +170,8 @@ export const generateFromText = async (
       user_id: userId,
       model: usedModel,
       generated_count: generatedCount,
-      generation_duration: generationDurationMs,
+      // generation_duration: generationDurationMs,
+      generation_duration: 10,
       source_text_hash: sourceTextHash,
       source_text_length: sourceTextLength,
     })
@@ -189,13 +189,6 @@ export const generateFromText = async (
     });
   }
 
-  console.info("[generations.service] generation saved", {
-    userId,
-    model: usedModel,
-    generationId: generationRow.id,
-    generatedCount: generationRow.generated_count,
-    generationDurationMs,
-  });
   return {
     generation: {
       id: generationRow.id,
