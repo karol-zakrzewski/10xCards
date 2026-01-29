@@ -136,9 +136,27 @@ jobs:
               `Run: ${runUrl}`,
             ].join("\n");
 
+            const { owner, repo } = context.repo;
+            let issueNumber = context.payload.pull_request?.number;
+
+            if (!issueNumber) {
+              const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner,
+                repo,
+                commit_sha: context.sha,
+              });
+
+              issueNumber = prs?.[0]?.number;
+            }
+
+            if (!issueNumber) {
+              core.info("No PR found for this commit. Skipping status comment.");
+              return;
+            }
+
             await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
+              owner,
+              repo,
+              issue_number: issueNumber,
               body,
             });
