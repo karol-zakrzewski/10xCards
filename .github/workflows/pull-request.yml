@@ -30,7 +30,7 @@ jobs:
   unit-tests:
     name: Unit tests
     runs-on: ubuntu-latest
-    if: ${{ false }}
+    if: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/master' }}
     needs: lint
     steps:
       - name: Checkout
@@ -52,7 +52,7 @@ jobs:
   e2e-tests:
     name: E2E tests
     runs-on: ubuntu-latest
-    if: ${{ false }}
+    if: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/master' }}
     needs: lint
     environment: integration
     env:
@@ -118,7 +118,11 @@ jobs:
   deploy:
     name: Deploy to Cloudflare Pages
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' }}
+    needs:
+      - lint
+      - unit-tests
+      - e2e-tests
+    if: ${{ github.event_name == 'push' && needs.lint.result == 'success' && needs.unit-tests.result == 'success' && needs.e2e-tests.result == 'success' }}
     environment: production
     steps:
       - name: Checkout
