@@ -84,37 +84,6 @@ jobs:
             test-results
           if-no-files-found: warn
 
-  status-comment:
-    name: Status comment
-    runs-on: ubuntu-latest
-    needs:
-      - lint
-      - unit-tests
-      - e2e-tests
-    if: ${{ github.event_name == 'push' && needs.lint.result == 'success' && needs.unit-tests.result == 'success' && needs.e2e-tests.result == 'success' }}
-    permissions:
-      contents: read
-      pull-requests: write
-      issues: write
-    steps:
-      - name: Comment on PR with status
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-            const body = [
-              "✅ Lint, unit tests, and E2E tests passed.",
-              "",
-              `Run: ${runUrl}`,
-            ].join("\n");
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body,
-            });
-
   deploy:
     name: Deploy to Cloudflare Pages
     runs-on: ubuntu-latest
@@ -145,3 +114,31 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
+
+  status-comment:
+    name: Status comment
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: ${{ github.event_name == 'push' && needs.deploy.result == 'success' }}
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Comment on PR with status
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+            const body = [
+              "✅ Lint, unit tests, and E2E tests passed.",
+              "",
+              `Run: ${runUrl}`,
+            ].join("\n");
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body,
+            });
