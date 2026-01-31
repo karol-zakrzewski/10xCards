@@ -1,7 +1,10 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = process.env.E2E_BASE_URL;
+dotenv.config();
+dotenv.config({ path: ".env.test", override: true });
+
+const baseURL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 
 export default defineConfig({
   testDir: "tests/e2e",

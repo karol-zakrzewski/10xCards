@@ -22,7 +22,7 @@
 
 - Paste a short text (**1000–10000 characters**) and generate a small set of Q/A flashcards with AI
 - Edit each card, accept/reject it, and **bulk-save only accepted cards**
-- Create cards manually in the same editor
+- Create cards manually (front/back)
 - Store cards in **Supabase (PostgreSQL)** (review / spaced repetition planned post-MVP)
 
 Product requirements and key decisions live in:
@@ -39,11 +39,12 @@ Frontend
 - Tailwind CSS (`tailwindcss`) + `tailwind-merge`
 - shadcn/ui-style components (Radix UI, class-variance-authority, lucide-react)
 
-Backend (planned for MVP)
+Backend
 
+- Astro API routes (`src/pages/api`)
 - Supabase (PostgreSQL, Auth, Row Level Security)
 
-AI (planned for MVP)
+AI
 
 - Google Gemini (model gateway)
 
@@ -52,10 +53,10 @@ Tooling
 - ESLint (`eslint`) + Prettier (`prettier`)
 - Husky + lint-staged for pre-commit checks
 
-CI/CD & hosting (planned)
+CI/CD & hosting
 
 - GitHub Actions
-- DigitalOcean (Docker-based deployment)
+- Cloudflare Pages (Astro Cloudflare adapter + Wrangler)
 
 ## Getting started locally
 
@@ -75,7 +76,8 @@ npm install
 
 # 3) configure environment variables
 cp .env.example .env
-# fill in: SUPABASE_URL, SUPABASE_KEY, GEMINI_API_KEY
+# fill in: SUPABASE_URL, SUPABASE_KEY, SUPABASE_SERVICE_ROLE_KEY, GEMINI_API_KEY
+# optional for E2E: E2E_BASE_URL, E2E_EMAIL, E2E_PASSWORD
 ```
 
 Run the app
@@ -103,16 +105,15 @@ npm run preview
 - `npm run test` – run unit + integration tests once (Vitest)
 - `npm run test:watch` – run Vitest in watch mode
 - `npm run test:e2e` – run E2E tests (Playwright)
-- `npm run test:e2e:ui` – open Playwright UI runner
 - `npm run test:e2e:headed` – run Playwright with visible browser
 
 ## Testing
 
-Test suite covers the critical MVP flows across multiple layers:
+Test suite covers critical MVP flows across multiple layers:
 
-- **Unit tests**: validation schemas, DTO mapping, and service logic (Vitest).
-- **Integration tests**: API routes + Supabase RLS and constraints (Vitest).
-- **E2E tests**: happy paths for auth, AI generation, curation, and flashcard CRUD (Playwright).
+- **Unit tests**: validation schemas, viewmodels, and service logic (Vitest).
+- **Integration tests**: API route handlers and services with mocked Supabase/AI (Vitest).
+- **E2E tests**: UI happy paths for login and generation/curation; some API responses are stubbed in Playwright.
 
 Run tests locally
 
@@ -133,11 +134,12 @@ MVP includes
 
 - AI flashcard generation from pasted text (**1000–10000 character** hard limit; no auto-truncation)
 - Manual card creation (front/back)
-- Review & curation flow: edit, accept/reject, delete
+- Review & curation flow: edit proposals, accept/reject (with undo)
+- Manage saved flashcards: edit and delete
 - Bulk save of accepted cards; edits after acceptance require re-acceptance
 - Supabase persistence (cards with `user_id`, `front`, `back`, `source`, `generation_id`) with RLS enabled
-- Event logging for `generated`, `accepted`, `rejected` (for MVP metrics)
-- Authentication: sign up, sign in, password reset, delete account (no email verification; no auto-login on sign up)
+- Generation metrics (generated count, accepted counts) + generation error logs
+- Authentication: sign up, sign in, delete account; password recovery UI (email flow TBD)
 - End-to-end tests (Playwright) for the main “happy paths”
 
 Out of scope (MVP)
@@ -160,16 +162,16 @@ Success metrics (from PRD)
 
 ## Project status
 
-This repository currently contains the Astro/React/Tailwind scaffold; MVP features described in `.ai/prd.md` are **in progress**.
+This repository contains a working MVP app with auth, AI generation/curation, and flashcards; review flow remains **post-MVP**.
 
 - [x] MVP defined (`.ai/prd.md`)
 - [x] Tech stack selected (`.ai/tech-stack.md`)
 - [x] Supabase schema
 - [x] Auth screens and session handling
 - [x] AI generation flow (Google Gemini) + card curation
+- [x] Playwright end-to-end tests
+- [x] CI/CD + deployment (GitHub Actions → Cloudflare Pages)
 - [ ] Review flow (spaced repetition) — post-MVP
-- [ ] Playwright end-to-end tests
-- [ ] CI/CD + deployment
 
 ## License
 
