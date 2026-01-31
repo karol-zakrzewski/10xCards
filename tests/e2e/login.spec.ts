@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type APIRequestContext, type APIResponse } from "@playwright/test";
 
 import { GeneratePage } from "./pages/GeneratePage";
 import { LoginPage } from "./pages/LoginPage";
@@ -14,6 +14,40 @@ const getCredentials = () => {
   return { email, password };
 };
 
+const readErrorMessage = async (response: APIResponse) => {
+  try {
+    const body = await response.json();
+    return typeof body?.error?.message === "string" ? body.error.message : "";
+  } catch {
+    return "";
+  }
+};
+
+const ensureUserCanLogin = async (request: APIRequestContext, credentials: { email: string; password: string }) => {
+  const signInResponse = await request.post("/api/v1/auth/sign-in", { data: credentials });
+  if (signInResponse.ok()) {
+    return;
+  }
+
+  const signUpResponse = await request.post("/api/v1/auth/sign-up", { data: credentials });
+  if (!signUpResponse.ok()) {
+    const message = await readErrorMessage(signUpResponse);
+    throw new Error(
+      `Failed to create E2E user (status: ${signUpResponse.status()}). ${message || "Check auth configuration."}`
+    );
+  }
+
+  const retrySignInResponse = await request.post("/api/v1/auth/sign-in", { data: credentials });
+  if (!retrySignInResponse.ok()) {
+    const message = await readErrorMessage(retrySignInResponse);
+    throw new Error(
+      `Failed to sign in E2E user after sign up (status: ${retrySignInResponse.status()}). ${
+        message || "Check auth configuration."
+      }`
+    );
+  }
+};
+
 test("login.happyPath.redirectsToGenerate", async ({ browser, request }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -24,6 +58,8 @@ test("login.happyPath.redirectsToGenerate", async ({ browser, request }) => {
     const generate = new GeneratePage(page);
     const { email, password } = getCredentials();
 
+    await ensureUserCanLogin(request, { email, password });
+
     await login.goto();
     await expect(login.heading).toBeVisible();
 
@@ -31,9 +67,6 @@ test("login.happyPath.redirectsToGenerate", async ({ browser, request }) => {
     await login.login(email, password);
 
     // Assert
-    const res = await request.post("http://localhost:3000/api/v1/auth/sign-in");
-    expect(res.ok()).toBeTruthy();
-    await page.waitForURL("**/generate");
     await expect(page).toHaveURL(/\/generate$/);
     await expect(generate.sourceText).toBeVisible();
   } finally {
