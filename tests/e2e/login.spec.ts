@@ -100,3 +100,27 @@ test("login.validation.showsErrors", async ({ browser }) => {
     await context.close();
   }
 });
+
+test("login.error401.showsSubmitError", async ({ browser, request }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {
+    const login = new LoginPage(page);
+    const { email, password } = getCredentials();
+
+    await ensureUserCanLogin(request, { email, password });
+
+    await login.goto();
+    await expect(login.heading).toBeVisible();
+
+    await login.emailInput.fill(email);
+    await login.passwordInput.fill(`${password}__wrong`);
+    await login.submitButton.click();
+
+    await expect(page.getByText("Nieprawidłowy e-mail lub hasło.")).toBeVisible();
+    await expect(page).toHaveURL(/\/login$/);
+  } finally {
+    await context.close();
+  }
+});
